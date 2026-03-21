@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeOS — Professional Resume Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #16161d;
+    --surface2: #1e1e28;
+    --border: #2a2a38;
+    --accent: #c9a96e;
+    --accent2: #7c6fcd;
+    --text: #e8e8f0;
+    --text2: #8888a4;
+    --text3: #555568;
+    --danger: #e05c5c;
+    --success: #5cc897;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100%; overflow: hidden; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 52px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 200; position: relative;
+    overflow: visible;
+    gap: 8px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; overflow: hidden; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+  .topbar-logo span { color: var(--text2); font-weight: 400; font-size: 12px; margin-left: 6px; font-family: 'DM Mono', monospace; }
+  .topbar-credit { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #1a1206; font-weight: 600; }
+  .btn-primary:hover { background: #ddb97e; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-icon { padding: 7px 10px; font-size: 16px; }
+  .btn-label { display: inline; }
+
+  /* ── APP SHELL ── */
+  .app-shell { display: flex; height: calc(100vh - 52px); overflow: hidden; position: relative; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; flex-shrink: 0;
+    overflow-y: auto; transition: transform 0.25s ease; z-index: 150;
+  }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sidebar-section { padding: 14px; border-bottom: 1px solid var(--border); }
+  .sidebar-section:last-child { border-bottom: none; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text2);
+    transition: all 0.15s; margin-bottom: 1px; border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(201,169,110,0.12); color: var(--accent); border-color: rgba(201,169,110,0.2); }
+  .nav-item .icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+
+  .templates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .tpl-card { border: 2px solid var(--border); border-radius: 7px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; }
+  .tpl-card:hover { border-color: var(--accent); }
+  .tpl-card.active { border-color: var(--accent); }
+  .tpl-card.active::after { content: '✓'; position: absolute; top: 3px; right: 5px; color: var(--accent); font-size: 10px; font-weight: 700; }
+  .tpl-thumb { height: 70px; display: flex; flex-direction: column; padding: 5px; gap: 3px; }
+  .tpl-line { border-radius: 2px; }
+  .tpl-name { font-size: 10px; font-weight: 600; padding: 3px 5px; background: var(--surface2); color: var(--text2); text-align: center; border-top: 1px solid var(--border); }
+
+  .strength-box { background: var(--bg); border-radius: 6px; padding: 10px 11px; }
+  .strength-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .strength-lbl { font-size: 11.5px; color: var(--text2); }
+  .strength-pct { font-size: 11.5px; color: var(--accent); font-weight: 600; }
+  .strength-track { background: var(--border); border-radius: 3px; height: 3px; overflow: hidden; }
+  .strength-fill { height: 100%; border-radius: 3px; transition: width 0.5s, background 0.5s; }
+  .strength-tips { margin-top: 6px; font-size: 10.5px; color: var(--text3); line-height: 1.5; }
+
+  /* ── EDITOR ── */
+  .editor { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); min-width: 0; }
+  .editor::-webkit-scrollbar { width: 3px; }
+  .editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .editor-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .editor-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .editor-section-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .editor-section-body { padding: 16px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 11px; font-weight: 500; color: var(--text2); }
+  .form-input, .form-textarea {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 11px; font-size: 13px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; transition: border-color 0.15s; outline: none; width: 100%;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+
+  .entry-card { border: 1px solid var(--border); border-radius: 8px; padding: 13px; margin-bottom: 10px; background: var(--bg); }
+  .entry-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+  .entry-card-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .entry-delete { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; transition: color 0.15s; line-height: 1; }
+  .entry-delete:hover { color: var(--danger); }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+    background: transparent; border: 1px dashed var(--border); border-radius: 6px;
+    color: var(--text2); font-size: 13px; cursor: pointer; width: 100%;
+    justify-content: center; font-family: 'DM Sans', sans-serif; transition: all 0.15s; margin-top: 2px;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .skills-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; }
+  .skill-tag { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(124,111,205,0.15); border: 1px solid rgba(124,111,205,0.3); border-radius: 20px; font-size: 12px; color: var(--accent2); font-weight: 500; }
+  .skill-tag-remove { cursor: pointer; opacity: 0.6; font-size: 13px; }
+  .skill-tag-remove:hover { opacity: 1; }
+
+  /* ── PREVIEW ── */
+  .preview-panel { width: 460px; flex-shrink: 0; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+  .preview-header { padding: 10px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .preview-title { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.8px; text-transform: uppercase; }
+  .preview-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; display: flex; justify-content: center; align-items: flex-start; background: #ccc; }
+  .preview-scroll::-webkit-scrollbar { width: 3px; }
+  .preview-scroll::-webkit-scrollbar-thumb { background: #bbb; border-radius: 2px; }
+
+  /* ── RESUME PAGE WRAPPER ── */
+  .resume-page-wrapper {
+    width: 428px;
+    /* height is set dynamically by JS after render */
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.35);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  /* ── RESUME PAGE — True A4 at 96dpi = 794px wide ── */
+  .resume-page {
+    width: 794px;
+    min-height: 1123px;
+    background: white;
+    font-family: 'Georgia', serif;
+    color: #1a1a1a;
+    font-size: 12px;
+    line-height: 1.4;
+    transform-origin: top left;
+    transform: scale(0.539);
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* TEMPLATE: Executive */
+  .tpl-executive .resume-header { background: #1a2744; color: white; padding: 54px 50px 40px; }
+  .tpl-executive .r-name { font-size: 55px; font-weight: 700; margin-bottom: 7px; }
+  .tpl-executive .r-title { font-size: 23px; color: #c9a96e; font-style: italic; margin-bottom: 15px; }
+  .tpl-executive .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 15px; opacity: 0.85; font-family: 'DM Sans', sans-serif; }
+  .tpl-executive .resume-body { padding: 40px 50px; }
+  .tpl-executive .r-section { margin-bottom: 33px; }
+  .tpl-executive .r-section-title { font-size: 15px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #1a2744; border-bottom: 2px solid #c9a96e; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }
+  .tpl-executive .r-entry { margin-bottom: 19px; }
+  .tpl-executive .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-executive .r-entry-company { font-size: 21px; font-weight: 700; }
+  .tpl-executive .r-entry-date { font-size: 15px; color: #666; font-family: 'DM Sans', sans-serif; }
+  .tpl-executive .r-entry-role { font-size: 17px; color: #555; font-style: italic; margin-bottom: 5px; }
+  .tpl-executive .r-entry-desc { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-executive .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tpl-executive .r-skill { background: #eef0f8; padding: 7px 18px; border-radius: 4px; font-size: 14px; color: #1a2744; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  .tpl-executive .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Modern */
+  .tpl-modern .resume-header { display: grid; grid-template-columns: auto 1fr; background: white; border-bottom: 4px solid #2563eb; padding: 40px 36px 30px; gap: 23px; align-items: center; }
+  .tpl-modern .r-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg,#2563eb,#7c3aed); display: flex; align-items: center; justify-content: center; color: white; font-size: 35px; font-weight: 700; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }
+  .tpl-modern .r-name { font-size: 41px; font-weight: 700; color: #111; margin-bottom: 2px; }
+  .tpl-modern .r-title { font-size: 19px; color: #2563eb; font-style: italic; margin-bottom: 9px; }
+  .tpl-modern .r-contact { font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; display: flex; flex-wrap: wrap; gap: 11px; }
+  .tpl-modern .resume-body { display: grid; grid-template-columns: 220px 1fr; }
+  .tpl-modern .r-sidebar { background: #f0f4ff; padding: 28px 20px; }
+  .tpl-modern .r-main { padding: 28px 24px; }
+  .tpl-modern .r-section { margin-bottom: 25px; }
+  .tpl-modern .r-section-title { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2563eb; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-modern .r-entry { margin-bottom: 15px; }
+  .tpl-modern .r-entry-company { font-size: 18px; font-weight: 700; color: #111; }
+  .tpl-modern .r-entry-date { font-size: 12px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-modern .r-entry-role { font-size: 15px; color: #2563eb; font-style: italic; }
+  .tpl-modern .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; margin-top: 6px; }
+  .tpl-modern .r-skills-list { display: flex; flex-direction: column; gap: 5px; }
+  .tpl-modern .r-skill { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; }
+  .tpl-modern .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Minimal */
+  .tpl-minimal .resume-header { padding: 54px 50px 30px; border-bottom: 1px solid #ddd; }
+  .tpl-minimal .r-name { font-size: 57px; font-weight: 400; color: #111; letter-spacing: -2px; }
+  .tpl-minimal .r-title { font-size: 21px; color: #888; margin: 8px 0 18px; font-style: italic; }
+  .tpl-minimal .r-contact { font-size: 14px; color: #777; font-family: 'DM Sans', sans-serif; display: flex; gap: 19px; flex-wrap: wrap; }
+  .tpl-minimal .resume-body { padding: 32px 50px; }
+  .tpl-minimal .r-section { margin-bottom: 27px; display: grid; grid-template-columns: 130px 1fr; gap: 17px; }
+  .tpl-minimal .r-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa; font-family: 'DM Sans', sans-serif; padding-top: 4px; }
+  .tpl-minimal .r-entry { margin-bottom: 15px; }
+  .tpl-minimal .r-entry-company { font-size: 20px; font-weight: 700; color: #111; }
+  .tpl-minimal .r-entry-date { font-size: 13px; color: #aaa; font-family: 'DM Sans', sans-serif; }
+  .tpl-minimal .r-entry-role { font-size: 16px; color: #555; }
+  .tpl-minimal .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; margin-top: 6px; }
+  .tpl-minimal .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-minimal .r-skill { font-size: 14px; color: #555; font-family: 'DM Sans', sans-serif; }
+  .tpl-minimal .r-skill::after { content: ' ·'; color: #ccc; }
+  .tpl-minimal .r-skill:last-child::after { content: ''; }
+  .tpl-minimal .r-summary { font-size: 15px; color: #444; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Classic */
+  .tpl-classic .resume-header { text-align: center; padding: 50px 50px 28px; border-bottom: 2px solid #222; }
+  .tpl-classic .r-name { font-size: 49px; font-weight: 700; text-transform: uppercase; letter-spacing: 7px; color: #111; }
+  .tpl-classic .r-title { font-size: 19px; color: #666; font-style: italic; margin: 10px 0; }
+  .tpl-classic .r-contact { font-size: 14px; color: #555; font-family: 'DM Sans', sans-serif; display: flex; justify-content: center; gap: 19px; margin-top: 10px; flex-wrap: wrap; }
+  .tpl-classic .resume-body { padding: 32px 50px; }
+  .tpl-classic .r-section { margin-bottom: 27px; }
+  .tpl-classic .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; border-bottom: 1px solid #222; padding-bottom: 7px; margin-bottom: 13px; color: #111; font-family: 'DM Sans', sans-serif; }
+  .tpl-classic .r-entry { margin-bottom: 17px; }
+  .tpl-classic .r-entry-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px; }
+  .tpl-classic .r-entry-company { font-size: 21px; font-weight: 700; }
+  .tpl-classic .r-entry-date { font-size: 15px; color: #666; font-family: 'DM Sans', sans-serif; }
+  .tpl-classic .r-entry-role { font-size: 17px; font-style: italic; color: #444; }
+  .tpl-classic .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; margin-top: 6px; }
+  .tpl-classic .r-skills-list { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 2.2; }
+  .tpl-classic .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+
+  /* TEMPLATE: Bold */
+  .tpl-bold .resume-header { background: #111; color: white; padding: 48px 50px 36px; border-left: 10px solid #f59e0b; }
+  .tpl-bold .r-name { font-size: 51px; font-weight: 700; color: #f59e0b; letter-spacing: 1px; margin-bottom: 5px; }
+  .tpl-bold .r-title { font-size: 21px; color: #ccc; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }
+  .tpl-bold .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 14px; color: #aaa; font-family: 'DM Sans', sans-serif; }
+  .tpl-bold .resume-body { padding: 36px 50px; }
+  .tpl-bold .r-section { margin-bottom: 29px; }
+  .tpl-bold .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }
+  .tpl-bold .r-entry { margin-bottom: 19px; }
+  .tpl-bold .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-bold .r-entry-company { font-size: 21px; font-weight: 700; color: #111; }
+  .tpl-bold .r-entry-date { font-size: 14px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-bold .r-entry-role { font-size: 17px; color: #f59e0b; font-weight: 600; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; }
+  .tpl-bold .r-entry-desc { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }
+  .tpl-bold .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tpl-bold .r-skill { background: #111; color: #f59e0b; padding: 7px 18px; border-radius: 4px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .tpl-bold .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Elegant */
+  .tpl-elegant .resume-header { padding: 56px 52px 30px; border-top: 4px double #b8860b; text-align: center; }
+  .tpl-elegant .r-name { font-size: 49px; font-weight: 400; color: #2c2c2c; letter-spacing: 8px; text-transform: uppercase; font-family: 'Playfair Display', serif; }
+  .tpl-elegant .r-title { font-size: 19px; color: #b8860b; font-style: italic; margin: 10px 0 18px; letter-spacing: 1.5px; }
+  .tpl-elegant .r-divider { border: none; border-top: 1px solid #d4af37; margin: 12px 0; }
+  .tpl-elegant .r-contact { display: flex; justify-content: center; gap: 21px; font-size: 14px; color: #666; font-family: 'DM Sans', sans-serif; flex-wrap: wrap; }
+  .tpl-elegant .resume-body { padding: 30px 52px; }
+  .tpl-elegant .r-section { margin-bottom: 27px; }
+  .tpl-elegant .r-section-title { font-size: 14px; font-weight: 400; text-transform: uppercase; letter-spacing: 5px; color: #b8860b; border-bottom: 1px solid #d4af37; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; text-align: center; }
+  .tpl-elegant .r-entry { margin-bottom: 17px; }
+  .tpl-elegant .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-elegant .r-entry-company { font-size: 20px; font-weight: 600; color: #2c2c2c; font-style: italic; }
+  .tpl-elegant .r-entry-date { font-size: 14px; color: #999; font-family: 'DM Sans', sans-serif; }
+  .tpl-elegant .r-entry-role { font-size: 16px; color: #b8860b; margin-bottom: 4px; font-family: 'DM Sans', sans-serif; }
+  .tpl-elegant .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 2; }
+  .tpl-elegant .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+  .tpl-elegant .r-skill { border: 1px solid #d4af37; color: #b8860b; padding: 7px 20px; border-radius: 20px; font-size: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-elegant .r-summary { font-size: 15px; color: #444; line-height: 2.1; font-family: 'DM Sans', sans-serif; font-style: italic; text-align: center; }
+
+  /* TEMPLATE: Tech */
+  .tpl-tech .resume-header { background: #0d1117; color: white; padding: 42px 44px 34px; border-bottom: 1px solid #30363d; }
+  .tpl-tech .r-name { font-size: 43px; font-weight: 700; color: #58a6ff; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 5px; }
+  .tpl-tech .r-name::before { content: '> '; color: #3fb950; font-size: 35px; }
+  .tpl-tech .r-title { font-size: 18px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 13px; }
+  .tpl-tech .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 13px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; }
+  .tpl-tech .resume-body { padding: 32px 44px; }
+  .tpl-tech .r-section { margin-bottom: 25px; }
+  .tpl-tech .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #3fb950; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 13px; padding-bottom: 7px; border-bottom: 1px solid #21262d; }
+  .tpl-tech .r-section-title::before { content: '# '; color: #58a6ff; }
+  .tpl-tech .r-entry { margin-bottom: 17px; padding-left: 20px; border-left: 3px solid #21262d; }
+  .tpl-tech .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-tech .r-entry-company { font-size: 20px; font-weight: 700; color: #e6edf3; }
+  .tpl-tech .r-entry-date { font-size: 13px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; }
+  .tpl-tech .r-entry-role { font-size: 16px; color: #58a6ff; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; }
+  .tpl-tech .r-entry-desc { font-size: 14px; color: #8b949e; font-family: 'DM Sans', sans-serif; line-height: 1.9; }
+  .tpl-tech .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tpl-tech .r-skill { background: #161b22; border: 1px solid #30363d; color: #58a6ff; padding: 7px 18px; border-radius: 4px; font-size: 13px; font-family: 'DM Mono', 'Courier New', monospace; }
+  .tpl-tech .r-summary { font-size: 15px; color: #8b949e; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Sidebar */
+  .tpl-sidebar .resume-page-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 1123px; }
+  .tpl-sidebar .r-left { background: #1e3a5f; padding: 40px 24px; display: flex; flex-direction: column; gap: 25px; }
+  .tpl-sidebar .r-avatar-lg { width: 110px; height: 110px; border-radius: 50%; background: #2e5481; display: flex; align-items: center; justify-content: center; font-size: 39px; font-weight: 700; color: white; font-family: 'DM Sans', sans-serif; margin: 0 auto 8px; border: 4px solid #4a90d9; }
+  .tpl-sidebar .r-name { font-size: 20px; font-weight: 700; color: white; text-align: center; line-height: 1.3; margin-bottom: 2px; }
+  .tpl-sidebar .r-title { font-size: 13px; color: #90b8e0; text-align: center; font-family: 'DM Sans', sans-serif; margin-bottom: 7px; }
+  .tpl-sidebar .r-side-section { margin-bottom: 0; }
+  .tpl-sidebar .r-side-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #4a90d9; margin-bottom: 7px; font-family: 'DM Sans', sans-serif; border-bottom: 1px solid #2e5481; padding-bottom: 5px; }
+  .tpl-sidebar .r-contact-item { font-size: 11px; color: #b8d4f0; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; word-break: break-all; }
+  .tpl-sidebar .r-skill-side { font-size: 11px; color: #b8d4f0; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; padding-left: 10px; }
+  .tpl-sidebar .r-skill-side::before { content: '•'; color: #4a90d9; margin-right: 7px; }
+  .tpl-sidebar .r-right { padding: 40px 34px; }
+  .tpl-sidebar .r-section { margin-bottom: 25px; }
+  .tpl-sidebar .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-sidebar .r-entry { margin-bottom: 15px; }
+  .tpl-sidebar .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-sidebar .r-entry-company { font-size: 20px; font-weight: 700; color: #1e3a5f; }
+  .tpl-sidebar .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-sidebar .r-entry-role { font-size: 16px; color: #4a90d9; font-family: 'DM Sans', sans-serif; margin-bottom: 3px; }
+  .tpl-sidebar .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }
+  .tpl-sidebar .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+
+  /* TEMPLATE: Crimson */
+  .tpl-crimson .resume-header { background: #8b0000; color: white; padding: 50px 50px 36px; }
+  .tpl-crimson .r-name { font-size: 53px; font-weight: 700; margin-bottom: 5px; letter-spacing: -1px; }
+  .tpl-crimson .r-title { font-size: 21px; color: #ffb3b3; font-style: italic; margin-bottom: 13px; }
+  .tpl-crimson .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.8); font-family: 'DM Sans', sans-serif; }
+  .tpl-crimson .resume-body { padding: 38px 50px; }
+  .tpl-crimson .r-section { margin-bottom: 29px; }
+  .tpl-crimson .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #8b0000; border-left: 4px solid #8b0000; padding-left: 12px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-crimson .r-entry { margin-bottom: 17px; }
+  .tpl-crimson .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-crimson .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .tpl-crimson .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-crimson .r-entry-role { font-size: 15px; color: #8b0000; font-style: italic; margin-bottom: 3px; }
+  .tpl-crimson .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-crimson .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-crimson .r-skill { background: #fff0f0; border: 1px solid #ffb3b3; color: #8b0000; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  .tpl-crimson .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Forest */
+  .tpl-forest .resume-header { background: #1a3a2a; color: white; padding: 48px 50px 34px; border-bottom: 4px solid #4caf7d; }
+  .tpl-forest .r-name { font-size: 51px; font-weight: 700; margin-bottom: 5px; }
+  .tpl-forest .r-title { font-size: 20px; color: #4caf7d; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-forest .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; }
+  .tpl-forest .resume-body { padding: 36px 50px; }
+  .tpl-forest .r-section { margin-bottom: 27px; }
+  .tpl-forest .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #1a3a2a; background: #e8f5ee; padding: 8px 14px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; border-left: 4px solid #4caf7d; }
+  .tpl-forest .r-entry { margin-bottom: 17px; }
+  .tpl-forest .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-forest .r-entry-company { font-size: 19px; font-weight: 700; color: #1a3a2a; }
+  .tpl-forest .r-entry-date { font-size: 13px; color: #777; font-family: 'DM Sans', sans-serif; }
+  .tpl-forest .r-entry-role { font-size: 15px; color: #4caf7d; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-forest .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-forest .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-forest .r-skill { background: #e8f5ee; color: #1a3a2a; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .tpl-forest .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Slate */
+  .tpl-slate .resume-header { background: #2d3748; color: white; padding: 50px 50px 36px; }
+  .tpl-slate .r-name { font-size: 53px; font-weight: 300; margin-bottom: 5px; letter-spacing: 2px; font-family: 'DM Sans', sans-serif; }
+  .tpl-slate .r-title { font-size: 19px; color: #90cdf4; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-slate .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 12px; color: rgba(255,255,255,0.7); font-family: 'DM Sans', sans-serif; }
+  .tpl-slate .resume-body { display: grid; grid-template-columns: 1fr 240px; }
+  .tpl-slate .r-main { padding: 31px 31px 31px 47px; }
+  .tpl-slate .r-aside { background: #edf2f7; padding: 34px 28px; }
+  .tpl-slate .r-section { margin-bottom: 25px; }
+  .tpl-slate .r-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #2d3748; border-bottom: 2px solid #90cdf4; padding-bottom: 6px; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-slate .r-entry { margin-bottom: 15px; }
+  .tpl-slate .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-slate .r-entry-company { font-size: 18px; font-weight: 700; color: #2d3748; }
+  .tpl-slate .r-entry-date { font-size: 12px; color: #718096; font-family: 'DM Sans', sans-serif; }
+  .tpl-slate .r-entry-role { font-size: 14px; color: #4a90d9; font-family: 'DM Sans', sans-serif; margin-bottom: 2px; }
+  .tpl-slate .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-slate .r-skills-list { display: flex; flex-direction: column; gap: 5px; }
+  .tpl-slate .r-skill { font-size: 12px; color: #2d3748; font-family: 'DM Sans', sans-serif; padding: 4px 0; border-bottom: 1px solid #cbd5e0; }
+  .tpl-slate .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Violet */
+  .tpl-violet .resume-header { background: linear-gradient(135deg, #6b21a8, #4c1d95); color: white; padding: 50px 50px 36px; }
+  .tpl-violet .r-name { font-size: 53px; font-weight: 700; margin-bottom: 5px; }
+  .tpl-violet .r-title { font-size: 20px; color: #ddd6fe; font-style: italic; margin-bottom: 13px; }
+  .tpl-violet .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.8); font-family: 'DM Sans', sans-serif; }
+  .tpl-violet .resume-body { padding: 38px 50px; }
+  .tpl-violet .r-section { margin-bottom: 27px; }
+  .tpl-violet .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #6b21a8; border-bottom: 2px solid #6b21a8; padding-bottom: 6px; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-violet .r-entry { margin-bottom: 17px; }
+  .tpl-violet .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-violet .r-entry-company { font-size: 19px; font-weight: 700; color: #2d1b69; }
+  .tpl-violet .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-violet .r-entry-role { font-size: 15px; color: #6b21a8; font-style: italic; margin-bottom: 3px; }
+  .tpl-violet .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-violet .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-violet .r-skill { background: #f3e8ff; color: #6b21a8; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  .tpl-violet .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Coral */
+  .tpl-coral .resume-header { padding: 50px 50px 0; background: white; }
+  .tpl-coral .r-name { font-size: 55px; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; }
+  .tpl-coral .r-title { font-size: 21px; color: #ff6b6b; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-coral .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #666; font-family: 'DM Sans', sans-serif; margin-bottom: 17px; }
+  .tpl-coral .r-header-bar { height: 6px; background: linear-gradient(90deg, #ff6b6b, #ffa500, #ff6b6b); margin: 0; }
+  .tpl-coral .resume-body { padding: 36px 50px; }
+  .tpl-coral .r-section { margin-bottom: 27px; }
+  .tpl-coral .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #ff6b6b; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 7px; }
+  .tpl-coral .r-section-title::after { content: ''; flex: 1; height: 1px; background: #ffd5d5; }
+  .tpl-coral .r-entry { margin-bottom: 17px; }
+  .tpl-coral .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-coral .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .tpl-coral .r-entry-date { font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }
+  .tpl-coral .r-entry-role { font-size: 15px; color: #ff6b6b; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-coral .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-coral .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-coral .r-skill { background: #fff0f0; color: #ff6b6b; padding: 6px 16px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; border: 1px solid #ffd5d5; }
+  .tpl-coral .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Obsidian */
+  .tpl-obsidian .resume-wrapper { background: #0a0a0a; min-height: 1123px; }
+  .tpl-obsidian .resume-header { background: #0a0a0a; color: white; padding: 54px 50px 36px; border-bottom: 1px solid #222; }
+  .tpl-obsidian .r-name { font-size: 55px; font-weight: 700; color: white; margin-bottom: 5px; letter-spacing: -1px; }
+  .tpl-obsidian .r-title { font-size: 21px; color: #888; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; font-weight: 300; }
+  .tpl-obsidian .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; }
+  .tpl-obsidian .resume-body { background: #0a0a0a; padding: 40px 50px; }
+  .tpl-obsidian .r-section { margin-bottom: 29px; }
+  .tpl-obsidian .r-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: #555; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-obsidian .r-entry { margin-bottom: 19px; border-left: 2px solid #222; padding-left: 18px; }
+  .tpl-obsidian .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-obsidian .r-entry-company { font-size: 19px; font-weight: 700; color: white; }
+  .tpl-obsidian .r-entry-date { font-size: 12px; color: #555; font-family: 'DM Sans', sans-serif; }
+  .tpl-obsidian .r-entry-role { font-size: 15px; color: #aaa; font-family: 'DM Sans', sans-serif; margin-bottom: 3px; }
+  .tpl-obsidian .r-entry-desc { font-size: 14px; color: #888; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-obsidian .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-obsidian .r-skill { border: 1px solid #333; color: #aaa; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; }
+  .tpl-obsidian .r-summary { font-size: 14px; color: #888; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Teal */
+  .tpl-teal .resume-header { background: white; padding: 50px 50px 30px; }
+  .tpl-teal .r-accent-bar { height: 8px; background: linear-gradient(90deg, #0d9488, #06b6d4); }
+  .tpl-teal .r-name { font-size: 53px; font-weight: 700; color: #0d9488; margin-bottom: 3px; }
+  .tpl-teal .r-title { font-size: 20px; color: #333; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-teal .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #666; font-family: 'DM Sans', sans-serif; }
+  .tpl-teal .resume-body { padding: 36px 50px; }
+  .tpl-teal .r-section { margin-bottom: 27px; }
+  .tpl-teal .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0d9488; border-bottom: 2px solid #0d9488; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-teal .r-entry { margin-bottom: 17px; }
+  .tpl-teal .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-teal .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .tpl-teal .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-teal .r-entry-role { font-size: 15px; color: #0d9488; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-teal .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-teal .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-teal .r-skill { background: #f0fdfa; color: #0d9488; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #99f6e4; }
+  .tpl-teal .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Copper */
+  .tpl-copper .resume-header { background: #1c1410; color: white; padding: 50px 50px 36px; border-bottom: 3px solid #b87333; }
+  .tpl-copper .r-name { font-size: 51px; font-weight: 700; color: #b87333; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+  .tpl-copper .r-title { font-size: 19px; color: #d4956a; margin-bottom: 13px; font-style: italic; }
+  .tpl-copper .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }
+  .tpl-copper .resume-body { background: #faf8f5; padding: 38px 50px; }
+  .tpl-copper .r-section { margin-bottom: 27px; }
+  .tpl-copper .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #b87333; border-bottom: 1px solid #d4c5b0; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-copper .r-entry { margin-bottom: 17px; }
+  .tpl-copper .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-copper .r-entry-company { font-size: 19px; font-weight: 700; color: #1c1410; font-family: 'Playfair Display', serif; }
+  .tpl-copper .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-copper .r-entry-role { font-size: 15px; color: #b87333; margin-bottom: 3px; font-style: italic; }
+  .tpl-copper .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-copper .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-copper .r-skill { background: #1c1410; color: #b87333; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  .tpl-copper .r-summary { font-size: 14px; color: #444; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Ice */
+  .tpl-ice .resume-header { background: linear-gradient(180deg, #e0f2fe, #f0f9ff); padding: 50px 50px 36px; border-bottom: 2px solid #bae6fd; }
+  .tpl-ice .r-name { font-size: 53px; font-weight: 700; color: #0369a1; margin-bottom: 5px; }
+  .tpl-ice .r-title { font-size: 20px; color: #0ea5e9; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-ice .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #0369a1; font-family: 'DM Sans', sans-serif; }
+  .tpl-ice .resume-body { padding: 36px 50px; background: white; }
+  .tpl-ice .r-section { margin-bottom: 27px; }
+  .tpl-ice .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #0369a1; background: #e0f2fe; padding: 8px 14px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; border-radius: 4px; }
+  .tpl-ice .r-entry { margin-bottom: 17px; }
+  .tpl-ice .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-ice .r-entry-company { font-size: 19px; font-weight: 700; color: #0369a1; }
+  .tpl-ice .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-ice .r-entry-role { font-size: 15px; color: #0ea5e9; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-ice .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-ice .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-ice .r-skill { background: #e0f2fe; color: #0369a1; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #bae6fd; }
+  .tpl-ice .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Noir */
+  .tpl-noir .resume-header { background: white; padding: 50px 50px 36px; border-top: 8px solid #111; }
+  .tpl-noir .r-name { font-size: 55px; font-weight: 900; color: #111; margin-bottom: 3px; letter-spacing: -2px; text-transform: uppercase; font-family: 'DM Sans', sans-serif; }
+  .tpl-noir .r-title { font-size: 19px; color: #666; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; }
+  .tpl-noir .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 12px; color: #555; font-family: 'DM Sans', sans-serif; }
+  .tpl-noir .resume-body { padding: 36px 50px; }
+  .tpl-noir .r-section { margin-bottom: 27px; }
+  .tpl-noir .r-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; color: #111; border-bottom: 3px solid #111; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-noir .r-entry { margin-bottom: 17px; }
+  .tpl-noir .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-noir .r-entry-company { font-size: 19px; font-weight: 900; color: #111; font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+  .tpl-noir .r-entry-date { font-size: 11px; color: #888; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; }
+  .tpl-noir .r-entry-role { font-size: 14px; color: #555; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-weight: 300; }
+  .tpl-noir .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }
+  .tpl-noir .r-skills-list { display: flex; flex-wrap: wrap; gap: 3px; }
+  .tpl-noir .r-skill { border: 2px solid #111; color: #111; padding: 5px 14px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .tpl-noir .r-summary { font-size: 14px; color: #444; line-height: 2; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Rose */
+  .tpl-rose .resume-header { background: #fff1f2; padding: 50px 50px 36px; border-bottom: 3px solid #fb7185; }
+  .tpl-rose .r-name { font-size: 53px; font-weight: 700; color: #9f1239; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+  .tpl-rose .r-title { font-size: 20px; color: #fb7185; margin-bottom: 13px; font-style: italic; font-family: 'DM Sans', sans-serif; }
+  .tpl-rose .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #9f1239; font-family: 'DM Sans', sans-serif; }
+  .tpl-rose .resume-body { padding: 36px 50px; background: white; }
+  .tpl-rose .r-section { margin-bottom: 27px; }
+  .tpl-rose .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #9f1239; border-bottom: 2px solid #fda4af; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-rose .r-entry { margin-bottom: 17px; }
+  .tpl-rose .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-rose .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; font-family: 'Playfair Display', serif; }
+  .tpl-rose .r-entry-date { font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }
+  .tpl-rose .r-entry-role { font-size: 15px; color: #fb7185; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-style: italic; }
+  .tpl-rose .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-rose .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-rose .r-skill { background: #fff1f2; color: #9f1239; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #fda4af; }
+  .tpl-rose .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Sand */
+  .tpl-sand .resume-header { background: #fdf6ec; padding: 50px 50px 36px; border-bottom: 3px solid #c9a96e; }
+  .tpl-sand .r-name { font-size: 53px; font-weight: 700; color: #5c3d1e; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+  .tpl-sand .r-title { font-size: 20px; color: #c9a96e; margin-bottom: 13px; font-style: italic; }
+  .tpl-sand .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #8c6a42; font-family: 'DM Sans', sans-serif; }
+  .tpl-sand .resume-body { background: white; padding: 38px 50px; }
+  .tpl-sand .r-section { margin-bottom: 27px; }
+  .tpl-sand .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #5c3d1e; border-bottom: 2px solid #c9a96e; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-sand .r-entry { margin-bottom: 17px; }
+  .tpl-sand .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-sand .r-entry-company { font-size: 19px; font-weight: 700; color: #5c3d1e; font-family: 'Playfair Display', serif; }
+  .tpl-sand .r-entry-date { font-size: 13px; color: #8c6a42; font-family: 'DM Sans', sans-serif; }
+  .tpl-sand .r-entry-role { font-size: 15px; color: #c9a96e; margin-bottom: 3px; font-style: italic; }
+  .tpl-sand .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-sand .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-sand .r-skill { background: #fdf6ec; color: #5c3d1e; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #c9a96e; }
+  .tpl-sand .r-summary { font-size: 14px; color: #444; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Midnight */
+  .tpl-midnight .resume-header { background: #0f172a; color: white; padding: 50px 50px 36px; }
+  .tpl-midnight .r-name { font-size: 53px; font-weight: 700; color: #f8fafc; margin-bottom: 5px; }
+  .tpl-midnight .r-title { font-size: 20px; color: #94a3b8; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-midnight .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #64748b; font-family: 'DM Sans', sans-serif; }
+  .tpl-midnight .resume-body { background: #0f172a; padding: 36px 50px; }
+  .tpl-midnight .r-section { margin-bottom: 27px; }
+  .tpl-midnight .r-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #38bdf8; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-midnight .r-entry { margin-bottom: 17px; }
+  .tpl-midnight .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-midnight .r-entry-company { font-size: 19px; font-weight: 700; color: #f1f5f9; }
+  .tpl-midnight .r-entry-date { font-size: 12px; color: #64748b; font-family: 'DM Sans', sans-serif; }
+  .tpl-midnight .r-entry-role { font-size: 15px; color: #38bdf8; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-midnight .r-entry-desc { font-size: 14px; color: #94a3b8; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-midnight .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-midnight .r-skill { background: #1e293b; color: #38bdf8; padding: 6px 16px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #334155; }
+  .tpl-midnight .r-summary { font-size: 14px; color: #94a3b8; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Mint */
+  .tpl-mint .resume-header { background: white; padding: 50px 50px 36px; }
+  .tpl-mint .r-accent-line { height: 5px; background: linear-gradient(90deg, #10b981, #6ee7b7); margin-bottom: 25px; }
+  .tpl-mint .r-name { font-size: 53px; font-weight: 700; color: #064e3b; margin-bottom: 5px; }
+  .tpl-mint .r-title { font-size: 20px; color: #10b981; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }
+  .tpl-mint .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; }
+  .tpl-mint .resume-body { padding: 36px 50px; }
+  .tpl-mint .r-section { margin-bottom: 27px; }
+  .tpl-mint .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #064e3b; border-left: 5px solid #10b981; padding-left: 12px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-mint .r-entry { margin-bottom: 17px; }
+  .tpl-mint .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-mint .r-entry-company { font-size: 19px; font-weight: 700; color: #064e3b; }
+  .tpl-mint .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-mint .r-entry-role { font-size: 15px; color: #10b981; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }
+  .tpl-mint .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-mint .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-mint .r-skill { background: #ecfdf5; color: #064e3b; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #6ee7b7; }
+  .tpl-mint .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* TEMPLATE: Dusk */
+  .tpl-dusk .resume-header { background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; padding: 50px 50px 36px; }
+  .tpl-dusk .r-name { font-size: 53px; font-weight: 700; color: white; margin-bottom: 5px; }
+  .tpl-dusk .r-title { font-size: 20px; color: #a5b4fc; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-dusk .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.65); font-family: 'DM Sans', sans-serif; }
+  .tpl-dusk .resume-body { background: white; padding: 38px 50px; }
+  .tpl-dusk .r-section { margin-bottom: 27px; }
+  .tpl-dusk .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #312e81; border-bottom: 2px solid #a5b4fc; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }
+  .tpl-dusk .r-entry { margin-bottom: 17px; }
+  .tpl-dusk .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }
+  .tpl-dusk .r-entry-company { font-size: 19px; font-weight: 700; color: #1e1b4b; }
+  .tpl-dusk .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }
+  .tpl-dusk .r-entry-role { font-size: 15px; color: #6366f1; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-style: italic; }
+  .tpl-dusk .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }
+  .tpl-dusk .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tpl-dusk .r-skill { background: #eef2ff; color: #312e81; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #a5b4fc; }
+  .tpl-dusk .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
+
+  /* ── MOBILE TABS ── */
+  .mobile-tabs { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: var(--surface); border-top: 1px solid var(--border); z-index: 300; }
+  .mobile-tabs-inner { display: flex; height: 100%; }
+  .mobile-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; font-size: 10px; color: var(--text2); transition: color 0.15s; border: none; background: none; font-family: 'DM Sans', sans-serif; }
+  .mobile-tab.active { color: var(--accent); }
+  .mobile-tab-icon { font-size: 18px; line-height: 1; }
+
+  /* ── SIDEBAR OVERLAY ── */
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 140; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+  .sidebar-overlay.open { display: block; opacity: 1; pointer-events: auto; }
+
+  /* ── AI MODAL ── */
+
+  /* ── PRELOADER ── */
+  #preloader {
+    position: fixed; inset: 0;
+    background: #0a0a0e;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 99999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  #preloader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .pre-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: preLogoIn 0.7s ease 0.2s forwards;
+  }
+  .pre-by {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 8px;
+    letter-spacing: 2px;
+    opacity: 0;
+    animation: preLogoIn 0.6s ease 0.55s forwards;
+  }
+  .pre-by span { color: var(--text2); }
+  .pre-bar-wrap {
+    margin-top: 36px;
+    width: 160px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    animation: preLogoIn 0.4s ease 0.75s forwards;
+  }
+  .pre-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px;
+    animation: preBarFill 1.4s cubic-bezier(0.4,0,0.2,1) 0.9s forwards;
+  }
+  .pre-tagline {
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
+    opacity: 0;
+    animation: preLogoIn 0.5s ease 1s forwards;
+  }
+  @keyframes preLogoIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes preBarFill {
+    0%   { width: 0%; }
+    60%  { width: 75%; }
+    100% { width: 100%; }
+  }
+
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(40px); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 9999; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; pointer-events: auto; }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* ──────────────────────────────────
+     RESPONSIVE
+  ────────────────────────────────── */
+  /* ── LARGE SCREENS ── */
+  @media (min-width: 1400px) {
+    .sidebar { width: 260px; }
+    .preview-panel { width: 520px; }
+    .resume-page-wrapper { width: 488px; }
+    .resume-page { transform: scale(0.615); }
+  }
+
+  /* ── MEDIUM ── */
+  @media (max-width: 1100px) {
+    .preview-panel { width: 380px; }
+    .resume-page-wrapper { width: 348px; }
+    .resume-page { transform: scale(0.438); }
+  }
+
+  /* ── TABLET ── */
+  @media (max-width: 900px) {
+    .sidebar {
+      position: fixed; top: 52px; left: 0; bottom: 0;
+      transform: translateX(-100%); width: 270px;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+      z-index: 200;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .menu-btn-show { display: flex !important; }
+    .preview-panel { width: 300px; }
+    .resume-page-wrapper { width: 268px; }
+    .resume-page { transform: scale(0.338); }
+    .editor { padding: 14px; }
+    .form-row.triple { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── MOBILE ≤640px ── */
+  @media (max-width: 640px) {
+    html, body { overflow: auto; height: auto; }
+
+    .app-shell {
+      flex-direction: column;
+      overflow: visible;
+      height: auto;
+      min-height: calc(100dvh - 52px);
+    }
+
+    /* Editor */
+    .editor {
+      display: none;
+      overflow-y: auto;
+      height: auto;
+      padding: 14px 14px 88px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .editor.mobile-active { display: block; }
+
+    /* Preview */
+    .preview-panel {
+      display: none;
+      width: 100%;
+      border-left: none;
+      border-top: 1px solid var(--border);
+      height: calc(100dvh - 52px - 56px);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .preview-panel.mobile-active { display: flex; }
+
+    .preview-scroll {
+      padding: 12px;
+      background: #bbb;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Resume scale */
+    .resume-page-wrapper { width: calc(100vw - 48px); max-width: 340px; }
+    .resume-page { transform-origin: top left; }
+
+    /* Bottom tabs */
+    .mobile-tabs { display: block; }
+    .toast { bottom: 66px; }
+
+    /* Topbar */
+    .topbar { padding: 0 10px; gap: 6px; }
+    .topbar-logo { font-size: 16px; }
+    .topbar-logo span { display: none; }
+    .topbar-credit { display: none; }
+    .btn-label { display: none; }
+    .topbar-actions { gap: 5px; flex-shrink: 0; }
+    .btn-sm { padding: 5px 9px; font-size: 12px; }
+
+    /* Forms */
+    .form-row { grid-template-columns: 1fr; gap: 10px; }
+    .form-row.triple { grid-template-columns: 1fr; }
+
+    /* Sidebar drawer */
+    .sidebar { top: 52px; bottom: 56px; width: min(84vw, 300px); }
+
+    /* Modals — slide up from bottom */
+    .auth-modal {
+      border-radius: 18px 18px 0 0;
+      max-height: 88vh;
+      overflow-y: auto;
+      width: 100%;
+      max-width: 100%;
+    }
+    .auth-body { padding: 20px; }
+    .auth-modal-header { padding: 20px 20px 0; }
+
+    .dashboard-modal {
+      border-radius: 18px 18px 0 0;
+      max-height: 88vh;
+      overflow-y: auto;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .cl-modal {
+      border-radius: 18px 18px 0 0;
+      max-height: 90vh;
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  /* ── SMALL PHONES ≤480px ── */
+  @media (max-width: 480px) {
+    .resume-page-wrapper { width: calc(100vw - 32px); }
+    .dashboard-header { padding: 14px 16px; }
+    .dashboard-body { padding: 14px 16px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── TINY ≤360px ── */
+  @media (max-width: 360px) {
+    .topbar-logo { font-size: 14px; }
+    .resume-page-wrapper { width: calc(100vw - 20px); }
+    .btn-sm { padding: 4px 7px; font-size: 11px; }
+  }</style>
+</head>
+<body>
+
+<!-- PRELOADER -->
+<div id="preloader">
+  <div class="pre-logo">ResumeOS</div>
+  <div class="pre-by">by <span>Yash</span></div>
+  <div class="pre-bar-wrap"><div class="pre-bar"></div></div>
+  <div class="pre-tagline">Professional Resume Builder</div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="btn btn-ghost btn-icon" id="menu-btn" onclick="toggleSidebar()" title="Menu" style="display:none;">☰</button>
+    <div class="topbar-logo">ResumeOS</div>
+    <span class="topbar-credit">developed by Yash</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" onclick="exportPDF()">↓ <span class="btn-label">Download PDF</span></button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div class="app-shell">
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="section-label">Sections</div>
+      <div class="nav-item active" id="nav-personal" onclick="scrollToSection('personal')"><span class="icon">👤</span> Personal Info</div>
+      <div class="nav-item" id="nav-summary" onclick="scrollToSection('summary')"><span class="icon">📝</span> Summary</div>
+      <div class="nav-item" id="nav-experience" onclick="scrollToSection('experience')"><span class="icon">💼</span> Experience</div>
+      <div class="nav-item" id="nav-education" onclick="scrollToSection('education')"><span class="icon">🎓</span> Education</div>
+      <div class="nav-item" id="nav-skills" onclick="scrollToSection('skills')"><span class="icon">⚡</span> Skills</div>
+      <div class="nav-item" id="nav-projects" onclick="scrollToSection('projects')"><span class="icon">🔧</span> Projects</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="section-label">Template</div>
+      <div class="templates-grid">
+        <div class="tpl-card active" id="tpl-executive" onclick="setTemplate('executive')">
+          <div class="tpl-thumb" style="background:#1a2744;">
+            <div class="tpl-line" style="background:#c9a96e;height:3px;width:55%;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.35);height:2px;width:38%;"></div>
+            <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px;">
+              <div class="tpl-line" style="background:rgba(255,255,255,0.18);height:1px;width:100%;"></div>
+              <div class="tpl-line" style="background:rgba(255,255,255,0.13);height:1px;width:80%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Executive</div>
+        </div>
+        <div class="tpl-card" id="tpl-modern" onclick="setTemplate('modern')">
+          <div class="tpl-thumb" style="background:#f0f4ff;display:grid;grid-template-columns:28px 1fr;gap:4px;padding:5px;align-items:start;">
+            <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:50%;width:22px;height:22px;"></div>
+            <div style="display:flex;flex-direction:column;gap:2px;padding-top:2px;">
+              <div class="tpl-line" style="background:#111;height:3px;width:65%;"></div>
+              <div class="tpl-line" style="background:#2563eb;height:2px;width:42%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Modern</div>
+        </div>
+        <div class="tpl-card" id="tpl-minimal" onclick="setTemplate('minimal')">
+          <div class="tpl-thumb" style="background:white;padding:7px;">
+            <div class="tpl-line" style="background:#111;height:4px;width:50%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#aaa;height:2px;width:33%;margin-bottom:7px;"></div>
+            <div style="display:flex;gap:4px;">
+              <div style="width:24px;flex-shrink:0;"><div style="background:#ddd;height:2px;width:100%;border-radius:1px;"></div></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+                <div class="tpl-line" style="background:#333;height:2px;width:78%;"></div>
+                <div class="tpl-line" style="background:#ccc;height:2px;width:58%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="tpl-name">Minimal</div>
+        </div>
+        <div class="tpl-card" id="tpl-classic" onclick="setTemplate('classic')">
+          <div class="tpl-thumb" style="background:white;padding:7px;text-align:center;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;">
+              <div class="tpl-line" style="background:#111;height:3px;width:65%;"></div>
+              <div class="tpl-line" style="background:#111;height:1px;width:100%;"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div class="tpl-line" style="background:#333;height:2px;width:48%;margin:0 auto;"></div>
+              <div class="tpl-line" style="background:#ccc;height:2px;width:88%;margin:0 auto;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Classic</div>
+        </div>
+        <div class="tpl-card" id="tpl-bold" onclick="setTemplate('bold')">
+          <div class="tpl-thumb" style="background:#111;border-left:4px solid #f59e0b;padding:6px;">
+            <div class="tpl-line" style="background:#f59e0b;height:3px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#555;height:2px;width:40%;margin-bottom:6px;"></div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div class="tpl-line" style="background:#f59e0b;height:1px;width:100%;"></div>
+              <div class="tpl-line" style="background:#333;height:1px;width:80%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Bold</div>
+        </div>
+        <div class="tpl-card" id="tpl-elegant" onclick="setTemplate('elegant')">
+          <div class="tpl-thumb" style="background:white;padding:7px;border-top:3px double #b8860b;text-align:center;">
+            <div class="tpl-line" style="background:#2c2c2c;height:3px;width:65%;margin:0 auto 3px;"></div>
+            <div class="tpl-line" style="background:#b8860b;height:1px;width:80%;margin:0 auto 6px;"></div>
+            <div style="display:flex;flex-direction:column;gap:2px;align-items:center;">
+              <div class="tpl-line" style="background:#b8860b;height:1px;width:40%;"></div>
+              <div class="tpl-line" style="background:#ccc;height:1px;width:85%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Elegant</div>
+        </div>
+        <div class="tpl-card" id="tpl-tech" onclick="setTemplate('tech')">
+          <div class="tpl-thumb" style="background:#0d1117;padding:6px;">
+            <div style="display:flex;gap:3px;align-items:center;margin-bottom:4px;">
+              <div class="tpl-line" style="background:#3fb950;height:2px;width:8px;"></div>
+              <div class="tpl-line" style="background:#58a6ff;height:3px;width:55%;"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div class="tpl-line" style="background:#21262d;height:1px;width:100%;"></div>
+              <div class="tpl-line" style="background:#30363d;height:1px;width:70%;"></div>
+              <div class="tpl-line" style="background:#30363d;height:1px;width:85%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Tech</div>
+        </div>
+        <div class="tpl-card" id="tpl-sidebar" onclick="setTemplate('sidebar')">
+          <div class="tpl-thumb" style="background:white;display:grid;grid-template-columns:32px 1fr;">
+            <div style="background:#1e3a5f;height:100%;padding:4px 3px;display:flex;flex-direction:column;gap:2px;">
+              <div style="width:16px;height:16px;border-radius:50%;background:#2e5481;margin:0 auto 3px;border:1px solid #4a90d9;"></div>
+              <div class="tpl-line" style="background:#4a90d9;height:1px;width:100%;"></div>
+              <div class="tpl-line" style="background:#2e5481;height:1px;width:80%;"></div>
+            </div>
+            <div style="padding:5px;display:flex;flex-direction:column;gap:2px;">
+              <div class="tpl-line" style="background:#1e3a5f;height:3px;width:70%;"></div>
+              <div class="tpl-line" style="background:#ccc;height:1px;width:90%;"></div>
+              <div class="tpl-line" style="background:#ccc;height:1px;width:75%;"></div>
+            </div>
+          </div>
+          <div class="tpl-name">Sidebar</div>
+        </div>
+        <div class="tpl-card" id="tpl-crimson" onclick="setTemplate('crimson')">
+          <div class="tpl-thumb" style="background:#8b0000;padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#ffb3b3;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.3);height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.2);height:1px;width:75%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Crimson</div>
+        </div>
+        <div class="tpl-card" id="tpl-forest" onclick="setTemplate('forest')">
+          <div class="tpl-thumb" style="background:#1a3a2a;padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#4caf7d;height:2px;width:42%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:rgba(76,175,125,0.4);height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.15);height:1px;width:80%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Forest</div>
+        </div>
+        <div class="tpl-card" id="tpl-slate" onclick="setTemplate('slate')">
+          <div class="tpl-thumb" style="background:#2d3748;display:grid;grid-template-columns:1fr 32px;gap:0;">
+            <div style="padding:6px;"><div class="tpl-line" style="background:white;height:4px;width:70%;margin-bottom:3px;"></div><div class="tpl-line" style="background:#90cdf4;height:2px;width:50%;"></div></div>
+            <div style="background:#edf2f7;padding:4px 3px;"><div class="tpl-line" style="background:#2d3748;height:1px;width:100%;margin-bottom:2px;"></div><div class="tpl-line" style="background:#ccc;height:1px;width:80%;"></div></div>
+          </div><div class="tpl-name">Slate</div>
+        </div>
+        <div class="tpl-card" id="tpl-violet" onclick="setTemplate('violet')">
+          <div class="tpl-thumb" style="background:linear-gradient(135deg,#6b21a8,#4c1d95);padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:62%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#ddd6fe;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.25);height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.15);height:1px;width:80%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Violet</div>
+        </div>
+        <div class="tpl-card" id="tpl-coral" onclick="setTemplate('coral')">
+          <div class="tpl-thumb" style="background:white;padding:6px;border-bottom:3px solid #ff6b6b;">
+            <div class="tpl-line" style="background:#111;height:4px;width:62%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#ff6b6b;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#ddd;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#eee;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Coral</div>
+        </div>
+        <div class="tpl-card" id="tpl-obsidian" onclick="setTemplate('obsidian')">
+          <div class="tpl-thumb" style="background:#0a0a0a;padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#555;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#222;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#1a1a1a;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Obsidian</div>
+        </div>
+        <div class="tpl-card" id="tpl-teal" onclick="setTemplate('teal')">
+          <div class="tpl-thumb" style="background:white;padding:0;border-top:3px solid #0d9488;">
+            <div style="padding:5px;"><div class="tpl-line" style="background:#0d9488;height:4px;width:60%;margin-bottom:3px;"></div><div class="tpl-line" style="background:#333;height:2px;width:40%;margin-bottom:4px;"></div><div class="tpl-line" style="background:#ddd;height:1px;width:100%;"></div></div>
+          </div><div class="tpl-name">Teal</div>
+        </div>
+        <div class="tpl-card" id="tpl-copper" onclick="setTemplate('copper')">
+          <div class="tpl-thumb" style="background:#1c1410;padding:6px;border-bottom:2px solid #b87333;">
+            <div class="tpl-line" style="background:#b87333;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#d4956a;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#333;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#2a2018;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Copper</div>
+        </div>
+        <div class="tpl-card" id="tpl-ice" onclick="setTemplate('ice')">
+          <div class="tpl-thumb" style="background:linear-gradient(180deg,#e0f2fe,#f0f9ff);padding:6px;border-bottom:2px solid #bae6fd;">
+            <div class="tpl-line" style="background:#0369a1;height:4px;width:62%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#0ea5e9;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:rgba(3,105,161,0.2);height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:rgba(3,105,161,0.15);height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Ice</div>
+        </div>
+        <div class="tpl-card" id="tpl-noir" onclick="setTemplate('noir')">
+          <div class="tpl-thumb" style="background:white;padding:6px;border-top:4px solid #111;">
+            <div class="tpl-line" style="background:#111;height:5px;width:65%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#777;height:2px;width:45%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#111;height:2px;width:100%;"></div>
+            <div class="tpl-line" style="background:#ddd;height:1px;width:80%;margin-top:3px;"></div>
+          </div><div class="tpl-name">Noir</div>
+        </div>
+        <div class="tpl-card" id="tpl-rose" onclick="setTemplate('rose')">
+          <div class="tpl-thumb" style="background:#fff1f2;padding:6px;border-bottom:2px solid #fb7185;">
+            <div class="tpl-line" style="background:#9f1239;height:4px;width:62%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#fb7185;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#fda4af;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#ffe4e6;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Rose</div>
+        </div>
+        <div class="tpl-card" id="tpl-sand" onclick="setTemplate('sand')">
+          <div class="tpl-thumb" style="background:#fdf6ec;padding:6px;border-bottom:2px solid #c9a96e;">
+            <div class="tpl-line" style="background:#5c3d1e;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#c9a96e;height:2px;width:38%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#e8d5b7;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#f0e6d0;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Sand</div>
+        </div>
+        <div class="tpl-card" id="tpl-midnight" onclick="setTemplate('midnight')">
+          <div class="tpl-thumb" style="background:#0f172a;padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#94a3b8;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:#38bdf8;height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:#1e293b;height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Midnight</div>
+        </div>
+        <div class="tpl-card" id="tpl-mint" onclick="setTemplate('mint')">
+          <div class="tpl-thumb" style="background:white;padding:0;border-left:4px solid #10b981;">
+            <div style="padding:5px 5px 5px 6px;"><div class="tpl-line" style="background:#064e3b;height:4px;width:58%;margin-bottom:3px;"></div><div class="tpl-line" style="background:#10b981;height:2px;width:38%;margin-bottom:4px;"></div><div class="tpl-line" style="background:#d1fae5;height:1px;width:90%;"></div><div class="tpl-line" style="background:#eee;height:1px;width:72%;margin-top:2px;"></div></div>
+          </div><div class="tpl-name">Mint</div>
+        </div>
+        <div class="tpl-card" id="tpl-dusk" onclick="setTemplate('dusk')">
+          <div class="tpl-thumb" style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:6px;">
+            <div class="tpl-line" style="background:white;height:4px;width:60%;margin-bottom:3px;"></div>
+            <div class="tpl-line" style="background:#a5b4fc;height:2px;width:40%;margin-bottom:5px;"></div>
+            <div class="tpl-line" style="background:rgba(165,180,252,0.3);height:1px;width:100%;"></div>
+            <div class="tpl-line" style="background:rgba(255,255,255,0.1);height:1px;width:78%;margin-top:2px;"></div>
+          </div><div class="tpl-name">Dusk</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="section-label">Profile Strength</div>
+      <div class="strength-box">
+        <div class="strength-row"><span class="strength-lbl">Completeness</span><span class="strength-pct" id="strength-pct">40%</span></div>
+        <div class="strength-track"><div class="strength-fill" id="strength-bar" style="width:40%;background:var(--accent);"></div></div>
+        <div class="strength-tips" id="strength-tips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor mobile-active" id="editor">
+
+    <div class="editor-section" id="section-personal">
+      <div class="editor-section-header"><div class="editor-section-title">👤 Personal Information</div></div>
+      <div class="editor-section-body">
+
+        <!-- Photo Upload -->
+        <div class="form-row single" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">Passport Size Photo</label>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div id="photo-preview-box" onclick="document.getElementById('photo-input').click()" style="width:90px;height:110px;border:2px dashed var(--border);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg);flex-shrink:0;overflow:hidden;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <span id="photo-placeholder" style="font-size:28px;margin-bottom:4px;">📷</span>
+                <span id="photo-placeholder-text" style="font-size:10px;color:var(--text3);text-align:center;padding:0 6px;">Click to upload</span>
+                <img id="photo-img-preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;" alt="Photo">
+              </div>
+              <div style="flex:1;">
+                <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+                <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px;">Upload a professional passport-size photo.<br>Recommended: 35×45mm, face clearly visible.</div>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photo-input').click()">📷 Choose Photo</button>
+                  <button class="btn btn-ghost btn-sm" id="photo-remove-btn" onclick="removePhoto()" style="display:none;color:var(--danger);border-color:var(--danger);">✕ Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="firstName" placeholder="John" oninput="updatePreview();calcStrength()"></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="lastName" placeholder="Doe" oninput="updatePreview();calcStrength()"></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Professional Title</label><input class="form-input" id="jobTitle" placeholder="Senior Software Engineer" oninput="updatePreview()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="email" type="email" placeholder="john@example.com" oninput="updatePreview();calcStrength()"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="phone" placeholder="+1 (555) 000-0000" oninput="updatePreview()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="location" placeholder="New York, NY" oninput="updatePreview()"></div>
+          <div class="form-group"><label class="form-label">LinkedIn / Website</label><input class="form-input" id="linkedin" placeholder="linkedin.com/in/johndoe" oninput="updatePreview()"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-section" id="section-summary">
+      <div class="editor-section-header">
+        <div class="editor-section-title">📝 Professional Summary</div>
+      </div>
+      <div class="editor-section-body">
+        <div class="form-group">
+          <textarea class="form-textarea" id="summary" rows="4" placeholder="Write a compelling 2–3 sentence summary..." oninput="updatePreview();calcStrength()" style="min-height:96px;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-section" id="section-experience">
+      <div class="editor-section-header">
+        <div class="editor-section-title">💼 Work Experience</div>
+      </div>
+      <div class="editor-section-body">
+        <div id="experience-list"></div>
+        <button class="add-btn" onclick="addExperience()">+ Add Experience</button>
+      </div>
+    </div>
+
+    <div class="editor-section" id="section-education">
+      <div class="editor-section-header"><div class="editor-section-title">🎓 Education</div></div>
+      <div class="editor-section-body">
+        <div id="education-list"></div>
+        <button class="add-btn" onclick="addEducation()">+ Add Education</button>
+      </div>
+    </div>
+
+    <div class="editor-section" id="section-skills">
+      <div class="editor-section-header">
+        <div class="editor-section-title">⚡ Skills</div>
+      </div>
+      <div class="editor-section-body">
+        <div class="skills-container" id="skills-container"></div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="skill-input" placeholder="Type a skill and press Enter" style="flex:1;" onkeydown="if(event.key==='Enter'){addSkill();event.preventDefault()}">
+          <button class="btn btn-ghost" onclick="addSkill()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-section" id="section-projects">
+      <div class="editor-section-header"><div class="editor-section-title">🔧 Projects</div></div>
+      <div class="editor-section-body">
+        <div id="projects-list"></div>
+        <button class="add-btn" onclick="addProject()">+ Add Project</button>
+      </div>
+    </div>
+
+  </div><!-- /editor -->
+
+  <!-- PREVIEW -->
+  <div class="preview-panel" id="preview-panel">
+    <div class="preview-header">
+      <span class="preview-title">Live Preview</span>
+      <button class="btn btn-ghost btn-sm" onclick="exportPDF()">↓ PDF</button>
+    </div>
+    <div class="preview-scroll">
+      <div class="resume-page-wrapper">
+        <div class="resume-page" id="resume-preview"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<!-- MOBILE TABS -->
+<div class="mobile-tabs" id="mobile-tabs">
+  <div class="mobile-tabs-inner">
+    <button class="mobile-tab active" id="tab-edit" onclick="showMobilePanel('edit')"><span class="mobile-tab-icon">✏️</span>Edit</button>
+    <button class="mobile-tab" id="tab-preview" onclick="showMobilePanel('preview')"><span class="mobile-tab-icon">👁</span>Preview</button>
+    <button class="mobile-tab" id="tab-style" onclick="toggleSidebar()"><span class="mobile-tab-icon">🎨</span>Style</button>
+  </div>
+</div>
+
+<!-- AI OVERLAY removed -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ── STATE VARS ──
+var currentTemplate = 'executive';
+var skills = [];
+var experiences = [];
+var educations = [];
+var projects = [];
+var expId = 0;
+var eduId = 0;
+var projId = 0;
+var photoData = '';
+
+// ── PHOTO UPLOAD ──
+function handlePhotoUpload(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    photoData = e.target.result;
+    var img = document.getElementById('photo-img-preview');
+    var placeholder = document.getElementById('photo-placeholder');
+    var placeholderTxt = document.getElementById('photo-placeholder-text');
+    var removeBtn = document.getElementById('photo-remove-btn');
+    if (img) { img.src = photoData; img.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+    if (placeholderTxt) placeholderTxt.style.display = 'none';
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  photoData = '';
+  var img = document.getElementById('photo-img-preview');
+  var placeholder = document.getElementById('photo-placeholder');
+  var placeholderTxt = document.getElementById('photo-placeholder-text');
+  var removeBtn = document.getElementById('photo-remove-btn');
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = 'block';
+  if (placeholderTxt) placeholderTxt.style.display = 'block';
+  if (removeBtn) removeBtn.style.display = 'none';
+  var inp = document.getElementById('photo-input');
+  if (inp) inp.value = '';
+  updatePreview();
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', function() {
+  setupResponsive();
+  scaleMobilePreview();
+  addExperience();
+  addEducation();
+  updatePreview();
+  calcStrength();
+  setTimeout(function() {
+    var pre = document.getElementById('preloader');
+    if (pre) pre.classList.add('hide');
+  }, 2400);
+});
+
+// Dynamically scale resume-page on mobile to always fill the scroll area
+function scaleMobilePreview() {
+  if (window.innerWidth > 640) return;
+  var scroll = document.querySelector('.preview-scroll');
+  var wrapper = document.querySelector('.resume-page-wrapper');
+  var page = document.querySelector('.resume-page');
+  if (!scroll || !wrapper || !page) return;
+  var availW = scroll.clientWidth - 24;
+  var scale = availW / 794;
+  wrapper.style.width = availW + 'px';
+  page.style.transform = 'scale(' + scale + ')';
+  updateWrapperHeight();
+}
+window.addEventListener('resize', function() { scaleMobilePreview(); updateWrapperHeight(); });
+
+// ── RESPONSIVE ──
+function setupResponsive() {
+  var mq = window.matchMedia('(max-width: 900px)');
+  function check(e) {
+    var btn = document.getElementById('menu-btn');
+    if (btn) btn.style.display = e.matches ? 'flex' : 'none';
+    if (!e.matches) closeSidebar();
+  }
+  mq.addEventListener('change', check);
+  check(mq);
+}
+
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if (sb.classList.contains('open')) { sb.classList.remove('open'); ov.classList.remove('open'); }
+  else { sb.classList.add('open'); ov.classList.add('open'); }
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function showMobilePanel(panel) {
+  var editor = document.getElementById('editor');
+  var preview = document.getElementById('preview-panel');
+  var tabEdit = document.getElementById('tab-edit');
+  var tabPrev = document.getElementById('tab-preview');
+  if (panel === 'edit') {
+    editor.classList.add('mobile-active'); preview.classList.remove('mobile-active');
+    tabEdit.classList.add('active'); tabPrev.classList.remove('active');
+  } else {
+    preview.classList.add('mobile-active'); editor.classList.remove('mobile-active');
+    tabPrev.classList.add('active'); tabEdit.classList.remove('active');
+  }
+}
+
+function scrollToSection(id) {
+  if (window.innerWidth <= 640) showMobilePanel('edit');
+  var el = document.getElementById('section-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+  closeSidebar();
+}
+
+function setTemplate(tpl) {
+  currentTemplate = tpl;
+  document.querySelectorAll('.tpl-card').forEach(function(c) { c.classList.remove('active'); });
+  var card = document.getElementById('tpl-' + tpl);
+  if (card) card.classList.add('active');
+  updatePreview();
+}
+
+// ── EXPERIENCE ──
+function addExperience() {
+  expId++;
+  experiences.push({ id: expId, company:'', role:'', start:'', end:'', loc:'', desc:'' });
+  renderExperienceList();
+}
+function removeExperience(id) {
+  experiences = experiences.filter(function(e) { return e.id !== id; });
+  renderExperienceList(); updatePreview();
+}
+function getExp(id) { return experiences.find(function(e) { return e.id === id; }) || {}; }
+function renderExperienceList() {
+  var el = document.getElementById('experience-list');
+  if (!el) return;
+  el.innerHTML = experiences.map(function(e) {
+    return '<div class="entry-card">' +
+      '<div class="entry-card-header"><div class="entry-card-title">Experience #' + e.id + '</div><button class="entry-delete" onclick="removeExperience(' + e.id + ')">×</button></div>' +
+      '<div class="form-row"><div class="form-group"><label class="form-label">Company</label><input class="form-input" value="' + esc(e.company) + '" placeholder="Acme Corp" oninput="getExp(' + e.id + ').company=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">Job Title</label><input class="form-input" value="' + esc(e.role) + '" placeholder="Software Engineer" oninput="getExp(' + e.id + ').role=this.value;updatePreview()"></div></div>' +
+      '<div class="form-row triple"><div class="form-group"><label class="form-label">Start</label><input class="form-input" value="' + esc(e.start) + '" placeholder="Jan 2021" oninput="getExp(' + e.id + ').start=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">End</label><input class="form-input" value="' + esc(e.end) + '" placeholder="Present" oninput="getExp(' + e.id + ').end=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">Location</label><input class="form-input" value="' + esc(e.loc||'') + '" placeholder="Remote" oninput="getExp(' + e.id + ').loc=this.value;updatePreview()"></div></div>' +
+      '<div class="form-row single"><div class="form-group"><label class="form-label">Description / Achievements</label><textarea class="form-textarea" rows="3" placeholder="• Led development of..." oninput="getExp(' + e.id + ').desc=this.value;updatePreview()">' + esc(e.desc) + '</textarea></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── EDUCATION ──
+function addEducation() {
+  eduId++;
+  educations.push({ id: eduId, school:'', degree:'', field:'', year:'' });
+  renderEducationList();
+}
+function removeEducation(id) {
+  educations = educations.filter(function(e) { return e.id !== id; });
+  renderEducationList(); updatePreview();
+}
+function getEdu(id) { return educations.find(function(e) { return e.id === id; }) || {}; }
+function renderEducationList() {
+  var el = document.getElementById('education-list');
+  if (!el) return;
+  el.innerHTML = educations.map(function(e) {
+    return '<div class="entry-card">' +
+      '<div class="entry-card-header"><div class="entry-card-title">Education #' + e.id + '</div><button class="entry-delete" onclick="removeEducation(' + e.id + ')">×</button></div>' +
+      '<div class="form-row"><div class="form-group"><label class="form-label">School / University</label><input class="form-input" value="' + esc(e.school) + '" placeholder="MIT" oninput="getEdu(' + e.id + ').school=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">Degree</label><input class="form-input" value="' + esc(e.degree) + '" placeholder="B.Sc. Computer Science" oninput="getEdu(' + e.id + ').degree=this.value;updatePreview()"></div></div>' +
+      '<div class="form-row"><div class="form-group"><label class="form-label">Field of Study</label><input class="form-input" value="' + esc(e.field) + '" placeholder="Computer Science" oninput="getEdu(' + e.id + ').field=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">Year</label><input class="form-input" value="' + esc(e.year) + '" placeholder="2022" oninput="getEdu(' + e.id + ').year=this.value;updatePreview()"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── PROJECTS ──
+function addProject() {
+  projId++;
+  projects.push({ id: projId, name:'', role:'', desc:'' });
+  renderProjectsList();
+}
+function removeProject(id) {
+  projects = projects.filter(function(e) { return e.id !== id; });
+  renderProjectsList(); updatePreview();
+}
+function getProj(id) { return projects.find(function(e) { return e.id === id; }) || {}; }
+function renderProjectsList() {
+  var el = document.getElementById('projects-list');
+  if (!el) return;
+  el.innerHTML = projects.map(function(e) {
+    return '<div class="entry-card">' +
+      '<div class="entry-card-header"><div class="entry-card-title">Project #' + e.id + '</div><button class="entry-delete" onclick="removeProject(' + e.id + ')">×</button></div>' +
+      '<div class="form-row"><div class="form-group"><label class="form-label">Project Name</label><input class="form-input" value="' + esc(e.name) + '" placeholder="Analytics Dashboard" oninput="getProj(' + e.id + ').name=this.value;updatePreview()"></div><div class="form-group"><label class="form-label">Your Role</label><input class="form-input" value="' + esc(e.role) + '" placeholder="Lead Developer" oninput="getProj(' + e.id + ').role=this.value;updatePreview()"></div></div>' +
+      '<div class="form-row single"><div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" rows="2" placeholder="What you built and your impact..." oninput="getProj(' + e.id + ').desc=this.value;updatePreview()">' + esc(e.desc) + '</textarea></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── SKILLS ──
+function addSkill() {
+  var input = document.getElementById('skill-input');
+  var val = input.value.trim();
+  if (!val || skills.includes(val)) { input.value = ''; return; }
+  skills.push(val);
+  input.value = '';
+  renderSkills(); updatePreview(); calcStrength();
+}
+function removeSkill(skill) {
+  skills = skills.filter(function(s) { return s !== skill; });
+  renderSkills(); updatePreview();
+}
+function renderSkills() {
+  var el = document.getElementById('skills-container');
+  if (!el) return;
+  el.innerHTML = skills.map(function(s) {
+    return '<div class="skill-tag">' + esc(s) + ' <span class="skill-tag-remove" onclick="removeSkill(\'' + s.replace(/'/g,"\\'") + '\')">×</span></div>';
+  }).join('');
+}
+
+// ── HELPERS ──
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function getData() {
+  return {
+    firstName: document.getElementById('firstName').value || 'Your',
+    lastName: document.getElementById('lastName').value || 'Name',
+    jobTitle: document.getElementById('jobTitle').value || 'Professional Title',
+    email: document.getElementById('email').value || 'email@example.com',
+    phone: document.getElementById('phone').value || '',
+    location: document.getElementById('location').value || '',
+    linkedin: document.getElementById('linkedin').value || '',
+    summary: document.getElementById('summary').value || '',
+    photo: photoData || '',
+  };
+}
+
+// ── PREVIEW ──
+function updatePreview() {
+  var d = getData();
+  var name = d.firstName + ' ' + d.lastName;
+
+  // Passport photo HTML — shown in top-right of header for most templates
+  var photoHTML = d.photo
+    ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">'
+    : '';
+
+  // Build smart clickable contact links
+  function contactLink(val) {
+    if (!val) return '';
+    var v = val.trim();
+    var href = '';
+    if (/^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i.test(v)) {
+      href = 'mailto:' + v;
+    } else if (/^[\d\s().+\-]{6,}$/.test(v)) {
+      href = 'tel:' + v.replace(/\s/g,'');
+    } else if (/linkedin\.com/i.test(v)) {
+      href = (/^https?:\/\//i.test(v) ? '' : 'https://') + v;
+    } else if (/^(https?:\/\/|www\.)/i.test(v)) {
+      href = (/^https?:\/\//i.test(v) ? '' : 'https://') + v;
+    }
+    if (href) {
+      return '<a href="' + href + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;">' + esc(v) + '</a>';
+    }
+    return '<span>' + esc(v) + '</span>';
+  }
+
+  var contactItems = [d.email, d.phone, d.location, d.linkedin].filter(Boolean);
+  var contactHTML = contactItems.map(function(c) {
+    return '<span>' + contactLink(c) + '</span>';
+  }).join('');
+
+  var expHTML = experiences.filter(function(e) { return e.company || e.role; }).map(function(e) {
+    var date = [e.start, e.end].filter(Boolean).join(' – ');
+    return '<div class="r-entry"><div class="r-entry-head"><div class="r-entry-company">' + esc(e.company||'Company') + '</div><div class="r-entry-date">' + esc(date) + '</div></div>' +
+      (e.role ? '<div class="r-entry-role">' + esc(e.role) + '</div>' : '') +
+      (e.desc ? '<div class="r-entry-desc">' + esc(e.desc).replace(/\n/g,'<br>') + '</div>' : '') +
+    '</div>';
+  }).join('');
+
+  var eduHTML = educations.filter(function(e) { return e.school || e.degree; }).map(function(e) {
+    return '<div class="r-entry"><div class="r-entry-head"><div class="r-entry-company">' + esc(e.school||'University') + '</div><div class="r-entry-date">' + esc(e.year||'') + '</div></div>' +
+      '<div class="r-entry-role">' + esc([e.degree,e.field].filter(Boolean).join(', ')) + '</div></div>';
+  }).join('');
+
+  var projHTML = projects.filter(function(p) { return p.name; }).map(function(p) {
+    return '<div class="r-entry"><div class="r-entry-head"><div class="r-entry-company">' + esc(p.name) + '</div><div class="r-entry-date">' + esc(p.role||'') + '</div></div>' +
+      (p.desc ? '<div class="r-entry-desc">' + esc(p.desc) + '</div>' : '') + '</div>';
+  }).join('');
+
+  var html = '';
+  if (currentTemplate === 'executive') {
+    html = '<div class="tpl-executive"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div>';
+  } else if (currentTemplate === 'modern') {
+    var initials = ((d.firstName[0]||'') + (d.lastName[0]||'')).toUpperCase();
+    html = '<div class="tpl-modern"><div class="resume-header"><div class="r-avatar">' + esc(initials) + '</div><div><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div></div>' +
+      '<div class="resume-body"><div class="r-sidebar">' +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<div class="r-skill">• '+esc(s)+'</div>';}).join('') + '</div></div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+      '</div><div class="r-main">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">About Me</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div></div>';
+  } else if (currentTemplate === 'minimal') {
+    html = '<div class="tpl-minimal"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-section-body"><div class="r-summary">' + esc(d.summary) + '</div></div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div><div class="r-section-body">' + expHTML + '</div></div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div><div class="r-section-body">' + eduHTML + '</div></div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-section-body"><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div><div class="r-section-body">' + projHTML + '</div></div>' : '') +
+      '</div></div>';
+  } else if (currentTemplate === 'classic') {
+    html = '<div class="tpl-classic"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(esc).join(' · ') + '</div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div>';
+
+
+  } else if (currentTemplate === 'bold') {
+    html = '<div class="tpl-bold"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div>';
+
+  } else if (currentTemplate === 'elegant') {
+    html = '<div class="tpl-elegant"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;text-align:center;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><hr class="r-divider"><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(184,134,11,0.4);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Profile</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div>';
+
+  } else if (currentTemplate === 'tech') {
+    html = '<div class="tpl-tech"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div>' +
+      '<div class="resume-body">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">About</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (skills.length ? '<div class="r-section"><div class="r-section-title">Stack</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div></div>';
+
+  } else if (currentTemplate === 'sidebar') {
+    var contactItems2 = [d.email, d.phone, d.location, d.linkedin].filter(Boolean);
+    var initials2 = ((d.firstName[0]||'') + (d.lastName[0]||'')).toUpperCase();
+    html = '<div class="tpl-sidebar"><div class="resume-page-wrap">' +
+      '<div class="r-left">' +
+        '<div class="r-avatar-lg">' + esc(initials2) + '</div>' +
+        '<div class="r-name">' + esc(name) + '</div>' +
+        '<div class="r-title">' + esc(d.jobTitle) + '</div>' +
+        (contactItems2.length ? '<div class="r-side-section"><div class="r-side-label">Contact</div>' + contactItems2.map(function(c){return '<div class="r-contact-item">'+contactLink(c)+'</div>';}).join('') + '</div>' : '') +
+        (skills.length ? '<div class="r-side-section"><div class="r-side-label">Skills</div>' + skills.map(function(s){return '<div class="r-skill-side">'+esc(s)+'</div>';}).join('') + '</div>' : '') +
+      '</div>' +
+      '<div class="r-right">' +
+        (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') +
+        (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') +
+        (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') +
+        (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') +
+      '</div>' +
+    '</div></div>';
+
+
+  } else if (currentTemplate === 'crimson') {
+    html = '<div class="tpl-crimson"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'forest') {
+    html = '<div class="tpl-forest"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'slate') {
+    html = '<div class="tpl-slate"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body"><div class="r-main">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div><div class="r-aside">' + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<div class="r-skill">'+esc(s)+'</div>';}).join('') + '</div></div>' : '') + '</div></div></div>';
+  } else if (currentTemplate === 'violet') {
+    html = '<div class="tpl-violet"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'coral') {
+    html = '<div class="tpl-coral"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div><div class="r-header-bar"></div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'obsidian') {
+    html = '<div class="tpl-obsidian"><div class="resume-wrapper"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.15);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div></div>';
+  } else if (currentTemplate === 'teal') {
+    html = '<div class="tpl-teal"><div class="r-accent-bar"></div><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(13,148,136,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'copper') {
+    html = '<div class="tpl-copper"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'ice') {
+    html = '<div class="tpl-ice"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'noir') {
+    html = '<div class="tpl-noir"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'rose') {
+    html = '<div class="tpl-rose"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'sand') {
+    html = '<div class="tpl-sand"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(0,0,0,0.15);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'midnight') {
+    html = '<div class="tpl-midnight"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'mint') {
+    html = '<div class="tpl-mint"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-accent-line"></div><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(16,185,129,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  } else if (currentTemplate === 'dusk') {
+    html = '<div class="tpl-dusk"><div class="resume-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;"><div style="flex:1;"><div class="r-name">' + esc(name) + '</div><div class="r-title">' + esc(d.jobTitle) + '</div><div class="r-contact">' + contactHTML + '</div></div>' + (d.photo ? '<img src="' + d.photo + '" alt="Photo" style="width:110px;height:135px;object-fit:cover;border-radius:4px;border:3px solid rgba(255,255,255,0.3);flex-shrink:0;">' : '') + '</div><div class="resume-body">' + (d.summary ? '<div class="r-section"><div class="r-section-title">Summary</div><div class="r-summary">' + esc(d.summary) + '</div></div>' : '') + (expHTML ? '<div class="r-section"><div class="r-section-title">Experience</div>' + expHTML + '</div>' : '') + (eduHTML ? '<div class="r-section"><div class="r-section-title">Education</div>' + eduHTML + '</div>' : '') + (skills.length ? '<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-list">' + skills.map(function(s){return '<span class="r-skill">'+esc(s)+'</span>';}).join('') + '</div></div>' : '') + (projHTML ? '<div class="r-section"><div class="r-section-title">Projects</div>' + projHTML + '</div>' : '') + '</div></div>';
+  }
+  var previewEl = document.getElementById('resume-preview');
+  if (previewEl) {
+    previewEl.innerHTML = html;
+    setTimeout(updateWrapperHeight, 0);
+  }
+}
+
+// Recalculate wrapper height to fit actual page content at current scale
+function updateWrapperHeight() {
+  var page = document.querySelector('.resume-page');
+  var wrapper = document.querySelector('.resume-page-wrapper');
+  if (!page || !wrapper) return;
+  // Get current scale from transform
+  var style = window.getComputedStyle(page);
+  var matrix = style.transform;
+  var scale = 0.539; // default
+  if (matrix && matrix !== 'none') {
+    var match = matrix.match(/matrix\(([^,]+)/);
+    if (match) scale = parseFloat(match[1]);
+  }
+  // Override with inline style if set
+  if (page.style.transform) {
+    var m2 = page.style.transform.match(/scale\(([^)]+)\)/);
+    if (m2) scale = parseFloat(m2[1]);
+  }
+  var actualH = page.scrollHeight;
+  wrapper.style.height = Math.ceil(actualH * scale) + 'px';
+}
+
+// ── STRENGTH ──
+function calcStrength() {
+  var d = getData();
+  var score = 0; var tips = [];
+  if (d.firstName !== 'Your') score += 15; else tips.push('Add your name');
+  if (d.email !== 'email@example.com') score += 15; else tips.push('Add your email');
+  if (d.jobTitle !== 'Professional Title') score += 10; else tips.push('Add job title');
+  if (document.getElementById('summary').value) score += 20; else tips.push('Write a summary');
+  if (experiences.some(function(e){return e.company;})) score += 20; else tips.push('Add experience');
+  if (skills.length >= 3) score += 15; else tips.push('Add 3+ skills');
+  if (educations.some(function(e){return e.school;})) score += 5;
+  document.getElementById('strength-pct').textContent = score + '%';
+  var bar = document.getElementById('strength-bar');
+  bar.style.width = score + '%';
+  bar.style.background = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--accent)' : 'var(--danger)';
+  document.getElementById('strength-tips').innerHTML = tips.slice(0,2).map(function(t){return '• ' + t;}).join('<br>');
+}
+
+
+// ── PDF ──
+function exportPDF() {
+  var d = getData();
+  var name = (d.firstName + '_' + d.lastName).replace(/\s+/g, '_');
+  var resumeHTML = document.getElementById('resume-preview').innerHTML;
+
+  var win = window.open('', '_blank');
+  if (!win) { showToast('Allow popups to export PDF', 'error'); return; }
+
+  var tplCSS = "/* TEMPLATE: Executive */\n.tpl-executive .resume-header { background: #1a2744; color: white; padding: 54px 50px 40px; }\n.tpl-executive .r-name { font-size: 55px; font-weight: 700; margin-bottom: 7px; }\n.tpl-executive .r-title { font-size: 23px; color: #c9a96e; font-style: italic; margin-bottom: 15px; }\n.tpl-executive .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 15px; opacity: 0.85; font-family: 'DM Sans', sans-serif; }\n.tpl-executive .resume-body { padding: 40px 50px; }\n.tpl-executive .r-section { margin-bottom: 33px; }\n.tpl-executive .r-section-title { font-size: 15px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #1a2744; border-bottom: 2px solid #c9a96e; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }\n.tpl-executive .r-entry { margin-bottom: 19px; }\n.tpl-executive .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-executive .r-entry-company { font-size: 21px; font-weight: 700; }\n.tpl-executive .r-entry-date { font-size: 15px; color: #666; font-family: 'DM Sans', sans-serif; }\n.tpl-executive .r-entry-role { font-size: 17px; color: #555; font-style: italic; margin-bottom: 5px; }\n.tpl-executive .r-entry-desc { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-executive .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }\n.tpl-executive .r-skill { background: #eef0f8; padding: 7px 18px; border-radius: 4px; font-size: 14px; color: #1a2744; font-family: 'DM Sans', sans-serif; font-weight: 500; }\n.tpl-executive .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Modern */\n.tpl-modern .resume-header { display: grid; grid-template-columns: auto 1fr; background: white; border-bottom: 4px solid #2563eb; padding: 40px 36px 30px; gap: 23px; align-items: center; }\n.tpl-modern .r-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg,#2563eb,#7c3aed); display: flex; align-items: center; justify-content: center; color: white; font-size: 35px; font-weight: 700; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }\n.tpl-modern .r-name { font-size: 41px; font-weight: 700; color: #111; margin-bottom: 2px; }\n.tpl-modern .r-title { font-size: 19px; color: #2563eb; font-style: italic; margin-bottom: 9px; }\n.tpl-modern .r-contact { font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; display: flex; flex-wrap: wrap; gap: 11px; }\n.tpl-modern .resume-body { display: grid; grid-template-columns: 220px 1fr; }\n.tpl-modern .r-sidebar { background: #f0f4ff; padding: 28px 20px; }\n.tpl-modern .r-main { padding: 28px 24px; }\n.tpl-modern .r-section { margin-bottom: 25px; }\n.tpl-modern .r-section-title { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2563eb; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-modern .r-entry { margin-bottom: 15px; }\n.tpl-modern .r-entry-company { font-size: 18px; font-weight: 700; color: #111; }\n.tpl-modern .r-entry-date { font-size: 12px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-modern .r-entry-role { font-size: 15px; color: #2563eb; font-style: italic; }\n.tpl-modern .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; margin-top: 6px; }\n.tpl-modern .r-skills-list { display: flex; flex-direction: column; gap: 5px; }\n.tpl-modern .r-skill { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; }\n.tpl-modern .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Minimal */\n.tpl-minimal .resume-header { padding: 54px 50px 30px; border-bottom: 1px solid #ddd; }\n.tpl-minimal .r-name { font-size: 57px; font-weight: 400; color: #111; letter-spacing: -2px; }\n.tpl-minimal .r-title { font-size: 21px; color: #888; margin: 8px 0 18px; font-style: italic; }\n.tpl-minimal .r-contact { font-size: 14px; color: #777; font-family: 'DM Sans', sans-serif; display: flex; gap: 19px; flex-wrap: wrap; }\n.tpl-minimal .resume-body { padding: 32px 50px; }\n.tpl-minimal .r-section { margin-bottom: 27px; display: grid; grid-template-columns: 130px 1fr; gap: 17px; }\n.tpl-minimal .r-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa; font-family: 'DM Sans', sans-serif; padding-top: 4px; }\n.tpl-minimal .r-entry { margin-bottom: 15px; }\n.tpl-minimal .r-entry-company { font-size: 20px; font-weight: 700; color: #111; }\n.tpl-minimal .r-entry-date { font-size: 13px; color: #aaa; font-family: 'DM Sans', sans-serif; }\n.tpl-minimal .r-entry-role { font-size: 16px; color: #555; }\n.tpl-minimal .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; margin-top: 6px; }\n.tpl-minimal .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-minimal .r-skill { font-size: 14px; color: #555; font-family: 'DM Sans', sans-serif; }\n.tpl-minimal .r-skill::after { content: ' \u00b7'; color: #ccc; }\n.tpl-minimal .r-skill:last-child::after { content: ''; }\n.tpl-minimal .r-summary { font-size: 15px; color: #444; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Classic */\n.tpl-classic .resume-header { text-align: center; padding: 50px 50px 28px; border-bottom: 2px solid #222; }\n.tpl-classic .r-name { font-size: 49px; font-weight: 700; text-transform: uppercase; letter-spacing: 7px; color: #111; }\n.tpl-classic .r-title { font-size: 19px; color: #666; font-style: italic; margin: 10px 0; }\n.tpl-classic .r-contact { font-size: 14px; color: #555; font-family: 'DM Sans', sans-serif; display: flex; justify-content: center; gap: 19px; margin-top: 10px; flex-wrap: wrap; }\n.tpl-classic .resume-body { padding: 32px 50px; }\n.tpl-classic .r-section { margin-bottom: 27px; }\n.tpl-classic .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; border-bottom: 1px solid #222; padding-bottom: 7px; margin-bottom: 13px; color: #111; font-family: 'DM Sans', sans-serif; }\n.tpl-classic .r-entry { margin-bottom: 17px; }\n.tpl-classic .r-entry-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px; }\n.tpl-classic .r-entry-company { font-size: 21px; font-weight: 700; }\n.tpl-classic .r-entry-date { font-size: 15px; color: #666; font-family: 'DM Sans', sans-serif; }\n.tpl-classic .r-entry-role { font-size: 17px; font-style: italic; color: #444; }\n.tpl-classic .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; margin-top: 6px; }\n.tpl-classic .r-skills-list { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 2.2; }\n.tpl-classic .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Bold */\n.tpl-bold .resume-header { background: #111; color: white; padding: 48px 50px 36px; border-left: 10px solid #f59e0b; }\n.tpl-bold .r-name { font-size: 51px; font-weight: 700; color: #f59e0b; letter-spacing: 1px; margin-bottom: 5px; }\n.tpl-bold .r-title { font-size: 21px; color: #ccc; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }\n.tpl-bold .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 14px; color: #aaa; font-family: 'DM Sans', sans-serif; }\n.tpl-bold .resume-body { padding: 36px 50px; }\n.tpl-bold .r-section { margin-bottom: 29px; }\n.tpl-bold .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; }\n.tpl-bold .r-entry { margin-bottom: 19px; }\n.tpl-bold .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-bold .r-entry-company { font-size: 21px; font-weight: 700; color: #111; }\n.tpl-bold .r-entry-date { font-size: 14px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-bold .r-entry-role { font-size: 17px; color: #f59e0b; font-weight: 600; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; }\n.tpl-bold .r-entry-desc { font-size: 15px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }\n.tpl-bold .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }\n.tpl-bold .r-skill { background: #111; color: #f59e0b; padding: 7px 18px; border-radius: 4px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 600; }\n.tpl-bold .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Elegant */\n.tpl-elegant .resume-header { padding: 56px 52px 30px; border-top: 4px double #b8860b; text-align: center; }\n.tpl-elegant .r-name { font-size: 49px; font-weight: 400; color: #2c2c2c; letter-spacing: 8px; text-transform: uppercase; font-family: 'Playfair Display', serif; }\n.tpl-elegant .r-title { font-size: 19px; color: #b8860b; font-style: italic; margin: 10px 0 18px; letter-spacing: 1.5px; }\n.tpl-elegant .r-divider { border: none; border-top: 1px solid #d4af37; margin: 12px 0; }\n.tpl-elegant .r-contact { display: flex; justify-content: center; gap: 21px; font-size: 14px; color: #666; font-family: 'DM Sans', sans-serif; flex-wrap: wrap; }\n.tpl-elegant .resume-body { padding: 30px 52px; }\n.tpl-elegant .r-section { margin-bottom: 27px; }\n.tpl-elegant .r-section-title { font-size: 14px; font-weight: 400; text-transform: uppercase; letter-spacing: 5px; color: #b8860b; border-bottom: 1px solid #d4af37; padding-bottom: 8px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; text-align: center; }\n.tpl-elegant .r-entry { margin-bottom: 17px; }\n.tpl-elegant .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-elegant .r-entry-company { font-size: 20px; font-weight: 600; color: #2c2c2c; font-style: italic; }\n.tpl-elegant .r-entry-date { font-size: 14px; color: #999; font-family: 'DM Sans', sans-serif; }\n.tpl-elegant .r-entry-role { font-size: 16px; color: #b8860b; margin-bottom: 4px; font-family: 'DM Sans', sans-serif; }\n.tpl-elegant .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 2; }\n.tpl-elegant .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }\n.tpl-elegant .r-skill { border: 1px solid #d4af37; color: #b8860b; padding: 7px 20px; border-radius: 20px; font-size: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-elegant .r-summary { font-size: 15px; color: #444; line-height: 2.1; font-family: 'DM Sans', sans-serif; font-style: italic; text-align: center; }\n/* TEMPLATE: Tech */\n.tpl-tech .resume-header { background: #0d1117; color: white; padding: 42px 44px 34px; border-bottom: 1px solid #30363d; }\n.tpl-tech .r-name { font-size: 43px; font-weight: 700; color: #58a6ff; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 5px; }\n.tpl-tech .r-name::before { content: '> '; color: #3fb950; font-size: 35px; }\n.tpl-tech .r-title { font-size: 18px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 13px; }\n.tpl-tech .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 13px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; }\n.tpl-tech .resume-body { padding: 32px 44px; }\n.tpl-tech .r-section { margin-bottom: 25px; }\n.tpl-tech .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #3fb950; font-family: 'DM Mono', 'Courier New', monospace; margin-bottom: 13px; padding-bottom: 7px; border-bottom: 1px solid #21262d; }\n.tpl-tech .r-section-title::before { content: '# '; color: #58a6ff; }\n.tpl-tech .r-entry { margin-bottom: 17px; padding-left: 20px; border-left: 3px solid #21262d; }\n.tpl-tech .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-tech .r-entry-company { font-size: 20px; font-weight: 700; color: #e6edf3; }\n.tpl-tech .r-entry-date { font-size: 13px; color: #8b949e; font-family: 'DM Mono', 'Courier New', monospace; }\n.tpl-tech .r-entry-role { font-size: 16px; color: #58a6ff; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; }\n.tpl-tech .r-entry-desc { font-size: 14px; color: #8b949e; font-family: 'DM Sans', sans-serif; line-height: 1.9; }\n.tpl-tech .r-skills-list { display: flex; flex-wrap: wrap; gap: 7px; }\n.tpl-tech .r-skill { background: #161b22; border: 1px solid #30363d; color: #58a6ff; padding: 7px 18px; border-radius: 4px; font-size: 13px; font-family: 'DM Mono', 'Courier New', monospace; }\n.tpl-tech .r-summary { font-size: 15px; color: #8b949e; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Sidebar */\n.tpl-sidebar .resume-page-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 1123px; }\n.tpl-sidebar .r-left { background: #1e3a5f; padding: 40px 24px; display: flex; flex-direction: column; gap: 25px; }\n.tpl-sidebar .r-avatar-lg { width: 110px; height: 110px; border-radius: 50%; background: #2e5481; display: flex; align-items: center; justify-content: center; font-size: 39px; font-weight: 700; color: white; font-family: 'DM Sans', sans-serif; margin: 0 auto 8px; border: 4px solid #4a90d9; }\n.tpl-sidebar .r-name { font-size: 20px; font-weight: 700; color: white; text-align: center; line-height: 1.3; margin-bottom: 2px; }\n.tpl-sidebar .r-title { font-size: 13px; color: #90b8e0; text-align: center; font-family: 'DM Sans', sans-serif; margin-bottom: 7px; }\n.tpl-sidebar .r-side-section { margin-bottom: 0; }\n.tpl-sidebar .r-side-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #4a90d9; margin-bottom: 7px; font-family: 'DM Sans', sans-serif; border-bottom: 1px solid #2e5481; padding-bottom: 5px; }\n.tpl-sidebar .r-contact-item { font-size: 11px; color: #b8d4f0; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; word-break: break-all; }\n.tpl-sidebar .r-skill-side { font-size: 11px; color: #b8d4f0; font-family: 'DM Sans', sans-serif; margin-bottom: 4px; padding-left: 10px; }\n.tpl-sidebar .r-skill-side::before { content: '\u2022'; color: #4a90d9; margin-right: 7px; }\n.tpl-sidebar .r-right { padding: 40px 34px; }\n.tpl-sidebar .r-section { margin-bottom: 25px; }\n.tpl-sidebar .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-sidebar .r-entry { margin-bottom: 15px; }\n.tpl-sidebar .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-sidebar .r-entry-company { font-size: 20px; font-weight: 700; color: #1e3a5f; }\n.tpl-sidebar .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-sidebar .r-entry-role { font-size: 16px; color: #4a90d9; font-family: 'DM Sans', sans-serif; margin-bottom: 3px; }\n.tpl-sidebar .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }\n.tpl-sidebar .r-summary { font-size: 15px; color: #333; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Crimson */\n.tpl-crimson .resume-header { background: #8b0000; color: white; padding: 50px 50px 36px; }\n.tpl-crimson .r-name { font-size: 53px; font-weight: 700; margin-bottom: 5px; letter-spacing: -1px; }\n.tpl-crimson .r-title { font-size: 21px; color: #ffb3b3; font-style: italic; margin-bottom: 13px; }\n.tpl-crimson .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.8); font-family: 'DM Sans', sans-serif; }\n.tpl-crimson .resume-body { padding: 38px 50px; }\n.tpl-crimson .r-section { margin-bottom: 29px; }\n.tpl-crimson .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #8b0000; border-left: 4px solid #8b0000; padding-left: 12px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-crimson .r-entry { margin-bottom: 17px; }\n.tpl-crimson .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-crimson .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }\n.tpl-crimson .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-crimson .r-entry-role { font-size: 15px; color: #8b0000; font-style: italic; margin-bottom: 3px; }\n.tpl-crimson .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-crimson .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-crimson .r-skill { background: #fff0f0; border: 1px solid #ffb3b3; color: #8b0000; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }\n.tpl-crimson .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Forest */\n.tpl-forest .resume-header { background: #1a3a2a; color: white; padding: 48px 50px 34px; border-bottom: 4px solid #4caf7d; }\n.tpl-forest .r-name { font-size: 51px; font-weight: 700; margin-bottom: 5px; }\n.tpl-forest .r-title { font-size: 20px; color: #4caf7d; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-forest .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; }\n.tpl-forest .resume-body { padding: 36px 50px; }\n.tpl-forest .r-section { margin-bottom: 27px; }\n.tpl-forest .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #1a3a2a; background: #e8f5ee; padding: 8px 14px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; border-left: 4px solid #4caf7d; }\n.tpl-forest .r-entry { margin-bottom: 17px; }\n.tpl-forest .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-forest .r-entry-company { font-size: 19px; font-weight: 700; color: #1a3a2a; }\n.tpl-forest .r-entry-date { font-size: 13px; color: #777; font-family: 'DM Sans', sans-serif; }\n.tpl-forest .r-entry-role { font-size: 15px; color: #4caf7d; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-forest .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-forest .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-forest .r-skill { background: #e8f5ee; color: #1a3a2a; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; }\n.tpl-forest .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Slate */\n.tpl-slate .resume-header { background: #2d3748; color: white; padding: 50px 50px 36px; }\n.tpl-slate .r-name { font-size: 53px; font-weight: 300; margin-bottom: 5px; letter-spacing: 2px; font-family: 'DM Sans', sans-serif; }\n.tpl-slate .r-title { font-size: 19px; color: #90cdf4; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-slate .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 12px; color: rgba(255,255,255,0.7); font-family: 'DM Sans', sans-serif; }\n.tpl-slate .resume-body { display: grid; grid-template-columns: 1fr 240px; }\n.tpl-slate .r-main { padding: 31px 31px 31px 47px; }\n.tpl-slate .r-aside { background: #edf2f7; padding: 34px 28px; }\n.tpl-slate .r-section { margin-bottom: 25px; }\n.tpl-slate .r-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #2d3748; border-bottom: 2px solid #90cdf4; padding-bottom: 6px; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-slate .r-entry { margin-bottom: 15px; }\n.tpl-slate .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-slate .r-entry-company { font-size: 18px; font-weight: 700; color: #2d3748; }\n.tpl-slate .r-entry-date { font-size: 12px; color: #718096; font-family: 'DM Sans', sans-serif; }\n.tpl-slate .r-entry-role { font-size: 14px; color: #4a90d9; font-family: 'DM Sans', sans-serif; margin-bottom: 2px; }\n.tpl-slate .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-slate .r-skills-list { display: flex; flex-direction: column; gap: 5px; }\n.tpl-slate .r-skill { font-size: 12px; color: #2d3748; font-family: 'DM Sans', sans-serif; padding: 4px 0; border-bottom: 1px solid #cbd5e0; }\n.tpl-slate .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Violet */\n.tpl-violet .resume-header { background: linear-gradient(135deg, #6b21a8, #4c1d95); color: white; padding: 50px 50px 36px; }\n.tpl-violet .r-name { font-size: 53px; font-weight: 700; margin-bottom: 5px; }\n.tpl-violet .r-title { font-size: 20px; color: #ddd6fe; font-style: italic; margin-bottom: 13px; }\n.tpl-violet .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.8); font-family: 'DM Sans', sans-serif; }\n.tpl-violet .resume-body { padding: 38px 50px; }\n.tpl-violet .r-section { margin-bottom: 27px; }\n.tpl-violet .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #6b21a8; border-bottom: 2px solid #6b21a8; padding-bottom: 6px; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-violet .r-entry { margin-bottom: 17px; }\n.tpl-violet .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-violet .r-entry-company { font-size: 19px; font-weight: 700; color: #2d1b69; }\n.tpl-violet .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-violet .r-entry-role { font-size: 15px; color: #6b21a8; font-style: italic; margin-bottom: 3px; }\n.tpl-violet .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-violet .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-violet .r-skill { background: #f3e8ff; color: #6b21a8; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }\n.tpl-violet .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Coral */\n.tpl-coral .resume-header { padding: 50px 50px 0; background: white; }\n.tpl-coral .r-name { font-size: 55px; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; }\n.tpl-coral .r-title { font-size: 21px; color: #ff6b6b; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-coral .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #666; font-family: 'DM Sans', sans-serif; margin-bottom: 17px; }\n.tpl-coral .r-header-bar { height: 6px; background: linear-gradient(90deg, #ff6b6b, #ffa500, #ff6b6b); margin: 0; }\n.tpl-coral .resume-body { padding: 36px 50px; }\n.tpl-coral .r-section { margin-bottom: 27px; }\n.tpl-coral .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #ff6b6b; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 7px; }\n.tpl-coral .r-section-title::after { content: ''; flex: 1; height: 1px; background: #ffd5d5; }\n.tpl-coral .r-entry { margin-bottom: 17px; }\n.tpl-coral .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-coral .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }\n.tpl-coral .r-entry-date { font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }\n.tpl-coral .r-entry-role { font-size: 15px; color: #ff6b6b; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-coral .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-coral .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-coral .r-skill { background: #fff0f0; color: #ff6b6b; padding: 6px 16px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; border: 1px solid #ffd5d5; }\n.tpl-coral .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Obsidian */\n.tpl-obsidian .resume-wrapper { background: #0a0a0a; min-height: 1123px; }\n.tpl-obsidian .resume-header { background: #0a0a0a; color: white; padding: 54px 50px 36px; border-bottom: 1px solid #222; }\n.tpl-obsidian .r-name { font-size: 55px; font-weight: 700; color: white; margin-bottom: 5px; letter-spacing: -1px; }\n.tpl-obsidian .r-title { font-size: 21px; color: #888; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; font-weight: 300; }\n.tpl-obsidian .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; }\n.tpl-obsidian .resume-body { background: #0a0a0a; padding: 40px 50px; }\n.tpl-obsidian .r-section { margin-bottom: 29px; }\n.tpl-obsidian .r-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: #555; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-obsidian .r-entry { margin-bottom: 19px; border-left: 2px solid #222; padding-left: 18px; }\n.tpl-obsidian .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-obsidian .r-entry-company { font-size: 19px; font-weight: 700; color: white; }\n.tpl-obsidian .r-entry-date { font-size: 12px; color: #555; font-family: 'DM Sans', sans-serif; }\n.tpl-obsidian .r-entry-role { font-size: 15px; color: #aaa; font-family: 'DM Sans', sans-serif; margin-bottom: 3px; }\n.tpl-obsidian .r-entry-desc { font-size: 14px; color: #888; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-obsidian .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-obsidian .r-skill { border: 1px solid #333; color: #aaa; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; }\n.tpl-obsidian .r-summary { font-size: 14px; color: #888; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Teal */\n.tpl-teal .resume-header { background: white; padding: 50px 50px 30px; }\n.tpl-teal .r-accent-bar { height: 8px; background: linear-gradient(90deg, #0d9488, #06b6d4); }\n.tpl-teal .r-name { font-size: 53px; font-weight: 700; color: #0d9488; margin-bottom: 3px; }\n.tpl-teal .r-title { font-size: 20px; color: #333; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-teal .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #666; font-family: 'DM Sans', sans-serif; }\n.tpl-teal .resume-body { padding: 36px 50px; }\n.tpl-teal .r-section { margin-bottom: 27px; }\n.tpl-teal .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0d9488; border-bottom: 2px solid #0d9488; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-teal .r-entry { margin-bottom: 17px; }\n.tpl-teal .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-teal .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; }\n.tpl-teal .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-teal .r-entry-role { font-size: 15px; color: #0d9488; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-teal .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-teal .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-teal .r-skill { background: #f0fdfa; color: #0d9488; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #99f6e4; }\n.tpl-teal .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Copper */\n.tpl-copper .resume-header { background: #1c1410; color: white; padding: 50px 50px 36px; border-bottom: 3px solid #b87333; }\n.tpl-copper .r-name { font-size: 51px; font-weight: 700; color: #b87333; margin-bottom: 5px; font-family: 'Playfair Display', serif; }\n.tpl-copper .r-title { font-size: 19px; color: #d4956a; margin-bottom: 13px; font-style: italic; }\n.tpl-copper .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }\n.tpl-copper .resume-body { background: #faf8f5; padding: 38px 50px; }\n.tpl-copper .r-section { margin-bottom: 27px; }\n.tpl-copper .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #b87333; border-bottom: 1px solid #d4c5b0; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-copper .r-entry { margin-bottom: 17px; }\n.tpl-copper .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-copper .r-entry-company { font-size: 19px; font-weight: 700; color: #1c1410; font-family: 'Playfair Display', serif; }\n.tpl-copper .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-copper .r-entry-role { font-size: 15px; color: #b87333; margin-bottom: 3px; font-style: italic; }\n.tpl-copper .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-copper .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-copper .r-skill { background: #1c1410; color: #b87333; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; }\n.tpl-copper .r-summary { font-size: 14px; color: #444; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Ice */\n.tpl-ice .resume-header { background: linear-gradient(180deg, #e0f2fe, #f0f9ff); padding: 50px 50px 36px; border-bottom: 2px solid #bae6fd; }\n.tpl-ice .r-name { font-size: 53px; font-weight: 700; color: #0369a1; margin-bottom: 5px; }\n.tpl-ice .r-title { font-size: 20px; color: #0ea5e9; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-ice .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #0369a1; font-family: 'DM Sans', sans-serif; }\n.tpl-ice .resume-body { padding: 36px 50px; background: white; }\n.tpl-ice .r-section { margin-bottom: 27px; }\n.tpl-ice .r-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #0369a1; background: #e0f2fe; padding: 8px 14px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; border-radius: 4px; }\n.tpl-ice .r-entry { margin-bottom: 17px; }\n.tpl-ice .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-ice .r-entry-company { font-size: 19px; font-weight: 700; color: #0369a1; }\n.tpl-ice .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-ice .r-entry-role { font-size: 15px; color: #0ea5e9; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-ice .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-ice .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-ice .r-skill { background: #e0f2fe; color: #0369a1; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #bae6fd; }\n.tpl-ice .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Noir */\n.tpl-noir .resume-header { background: white; padding: 50px 50px 36px; border-top: 8px solid #111; }\n.tpl-noir .r-name { font-size: 55px; font-weight: 900; color: #111; margin-bottom: 3px; letter-spacing: -2px; text-transform: uppercase; font-family: 'DM Sans', sans-serif; }\n.tpl-noir .r-title { font-size: 19px; color: #666; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; }\n.tpl-noir .r-contact { display: flex; flex-wrap: wrap; gap: 17px; font-size: 12px; color: #555; font-family: 'DM Sans', sans-serif; }\n.tpl-noir .resume-body { padding: 36px 50px; }\n.tpl-noir .r-section { margin-bottom: 27px; }\n.tpl-noir .r-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; color: #111; border-bottom: 3px solid #111; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-noir .r-entry { margin-bottom: 17px; }\n.tpl-noir .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-noir .r-entry-company { font-size: 19px; font-weight: 900; color: #111; font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px; }\n.tpl-noir .r-entry-date { font-size: 11px; color: #888; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; }\n.tpl-noir .r-entry-role { font-size: 14px; color: #555; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-weight: 300; }\n.tpl-noir .r-entry-desc { font-size: 13px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.9; }\n.tpl-noir .r-skills-list { display: flex; flex-wrap: wrap; gap: 3px; }\n.tpl-noir .r-skill { border: 2px solid #111; color: #111; padding: 5px 14px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }\n.tpl-noir .r-summary { font-size: 14px; color: #444; line-height: 2; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Rose */\n.tpl-rose .resume-header { background: #fff1f2; padding: 50px 50px 36px; border-bottom: 3px solid #fb7185; }\n.tpl-rose .r-name { font-size: 53px; font-weight: 700; color: #9f1239; margin-bottom: 5px; font-family: 'Playfair Display', serif; }\n.tpl-rose .r-title { font-size: 20px; color: #fb7185; margin-bottom: 13px; font-style: italic; font-family: 'DM Sans', sans-serif; }\n.tpl-rose .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #9f1239; font-family: 'DM Sans', sans-serif; }\n.tpl-rose .resume-body { padding: 36px 50px; background: white; }\n.tpl-rose .r-section { margin-bottom: 27px; }\n.tpl-rose .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #9f1239; border-bottom: 2px solid #fda4af; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-rose .r-entry { margin-bottom: 17px; }\n.tpl-rose .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-rose .r-entry-company { font-size: 19px; font-weight: 700; color: #1a1a1a; font-family: 'Playfair Display', serif; }\n.tpl-rose .r-entry-date { font-size: 13px; color: #999; font-family: 'DM Sans', sans-serif; }\n.tpl-rose .r-entry-role { font-size: 15px; color: #fb7185; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-style: italic; }\n.tpl-rose .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-rose .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-rose .r-skill { background: #fff1f2; color: #9f1239; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #fda4af; }\n.tpl-rose .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Sand */\n.tpl-sand .resume-header { background: #fdf6ec; padding: 50px 50px 36px; border-bottom: 3px solid #c9a96e; }\n.tpl-sand .r-name { font-size: 53px; font-weight: 700; color: #5c3d1e; margin-bottom: 5px; font-family: 'Playfair Display', serif; }\n.tpl-sand .r-title { font-size: 20px; color: #c9a96e; margin-bottom: 13px; font-style: italic; }\n.tpl-sand .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #8c6a42; font-family: 'DM Sans', sans-serif; }\n.tpl-sand .resume-body { background: white; padding: 38px 50px; }\n.tpl-sand .r-section { margin-bottom: 27px; }\n.tpl-sand .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #5c3d1e; border-bottom: 2px solid #c9a96e; padding-bottom: 6px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-sand .r-entry { margin-bottom: 17px; }\n.tpl-sand .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-sand .r-entry-company { font-size: 19px; font-weight: 700; color: #5c3d1e; font-family: 'Playfair Display', serif; }\n.tpl-sand .r-entry-date { font-size: 13px; color: #8c6a42; font-family: 'DM Sans', sans-serif; }\n.tpl-sand .r-entry-role { font-size: 15px; color: #c9a96e; margin-bottom: 3px; font-style: italic; }\n.tpl-sand .r-entry-desc { font-size: 14px; color: #444; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-sand .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-sand .r-skill { background: #fdf6ec; color: #5c3d1e; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #c9a96e; }\n.tpl-sand .r-summary { font-size: 14px; color: #444; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Midnight */\n.tpl-midnight .resume-header { background: #0f172a; color: white; padding: 50px 50px 36px; }\n.tpl-midnight .r-name { font-size: 53px; font-weight: 700; color: #f8fafc; margin-bottom: 5px; }\n.tpl-midnight .r-title { font-size: 20px; color: #94a3b8; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-midnight .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #64748b; font-family: 'DM Sans', sans-serif; }\n.tpl-midnight .resume-body { background: #0f172a; padding: 36px 50px; }\n.tpl-midnight .r-section { margin-bottom: 27px; }\n.tpl-midnight .r-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #38bdf8; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-midnight .r-entry { margin-bottom: 17px; }\n.tpl-midnight .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-midnight .r-entry-company { font-size: 19px; font-weight: 700; color: #f1f5f9; }\n.tpl-midnight .r-entry-date { font-size: 12px; color: #64748b; font-family: 'DM Sans', sans-serif; }\n.tpl-midnight .r-entry-role { font-size: 15px; color: #38bdf8; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-midnight .r-entry-desc { font-size: 14px; color: #94a3b8; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-midnight .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-midnight .r-skill { background: #1e293b; color: #38bdf8; padding: 6px 16px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #334155; }\n.tpl-midnight .r-summary { font-size: 14px; color: #94a3b8; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Mint */\n.tpl-mint .resume-header { background: white; padding: 50px 50px 36px; }\n.tpl-mint .r-accent-line { height: 5px; background: linear-gradient(90deg, #10b981, #6ee7b7); margin-bottom: 25px; }\n.tpl-mint .r-name { font-size: 53px; font-weight: 700; color: #064e3b; margin-bottom: 5px; }\n.tpl-mint .r-title { font-size: 20px; color: #10b981; margin-bottom: 11px; font-family: 'DM Sans', sans-serif; }\n.tpl-mint .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #555; font-family: 'DM Sans', sans-serif; }\n.tpl-mint .resume-body { padding: 36px 50px; }\n.tpl-mint .r-section { margin-bottom: 27px; }\n.tpl-mint .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #064e3b; border-left: 5px solid #10b981; padding-left: 12px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-mint .r-entry { margin-bottom: 17px; }\n.tpl-mint .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-mint .r-entry-company { font-size: 19px; font-weight: 700; color: #064e3b; }\n.tpl-mint .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-mint .r-entry-role { font-size: 15px; color: #10b981; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; }\n.tpl-mint .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-mint .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-mint .r-skill { background: #ecfdf5; color: #064e3b; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #6ee7b7; }\n.tpl-mint .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }\n/* TEMPLATE: Dusk */\n.tpl-dusk .resume-header { background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; padding: 50px 50px 36px; }\n.tpl-dusk .r-name { font-size: 53px; font-weight: 700; color: white; margin-bottom: 5px; }\n.tpl-dusk .r-title { font-size: 20px; color: #a5b4fc; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-dusk .r-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.65); font-family: 'DM Sans', sans-serif; }\n.tpl-dusk .resume-body { background: white; padding: 38px 50px; }\n.tpl-dusk .r-section { margin-bottom: 27px; }\n.tpl-dusk .r-section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #312e81; border-bottom: 2px solid #a5b4fc; padding-bottom: 7px; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; }\n.tpl-dusk .r-entry { margin-bottom: 17px; }\n.tpl-dusk .r-entry-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 3px; }\n.tpl-dusk .r-entry-company { font-size: 19px; font-weight: 700; color: #1e1b4b; }\n.tpl-dusk .r-entry-date { font-size: 13px; color: #888; font-family: 'DM Sans', sans-serif; }\n.tpl-dusk .r-entry-role { font-size: 15px; color: #6366f1; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-style: italic; }\n.tpl-dusk .r-entry-desc { font-size: 14px; color: #333; font-family: 'DM Sans', sans-serif; line-height: 1.8; }\n.tpl-dusk .r-skills-list { display: flex; flex-wrap: wrap; gap: 5px; }\n.tpl-dusk .r-skill { background: #eef2ff; color: #312e81; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid #a5b4fc; }\n.tpl-dusk .r-summary { font-size: 14px; color: #333; line-height: 1.9; font-family: 'DM Sans', sans-serif; }";
+
+  var doc = '<!DOCTYPE html><html><head>' +
+    '<meta charset="UTF-8">' +
+    '<title>' + name + '_Resume</title>' +
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap">' +
+    '<style>' +
+    '@page { size: A4; margin: 0; }' +
+    '* { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
+    'html { width: 794px; }' +
+    'body { width: 794px; background: white; font-family: Georgia, serif; color: #1a1a1a; font-size: 16px; line-height: 1.4; }' +
+    'a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }' +
+    tplCSS +
+    '</style>' +
+    '</head><body>' +
+    '<div style="width:794px; background:white; overflow:hidden;">' +
+    resumeHTML +
+    '</div>' +
+    '<script>' +
+    'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){setTimeout(function(){window.print();},600);});}else{setTimeout(function(){window.print();},1400);}' +
+    '<\/script>' +
+    '</body></html>';
+
+  win.document.write(doc);
+  win.document.close();
+  showToast('Opening print dialog\u2026', 'success');
+}
+
+
+
+// ── TOAST ──
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':'') + msg;
+  t.className = 'toast ' + (type||'') + ' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+</script>
+</body>
+</html>
