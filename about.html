@@ -727,31 +727,37 @@
 
   /* ── MOBILE ≤640px ── */
   @media (max-width: 640px) {
-    html, body { overflow: auto; height: auto; }
+    html, body { overflow: hidden; height: 100%; }
 
     .app-shell {
       flex-direction: column;
-      overflow: visible;
-      height: auto;
-      min-height: calc(100dvh - 52px);
+      overflow: hidden;
+      height: calc(100vh - 52px);
+      height: calc(100dvh - 52px);
+      position: relative;
     }
 
     /* Editor */
     .editor {
       display: none;
       overflow-y: auto;
-      height: auto;
-      padding: 14px 14px 88px;
+      overflow-x: hidden;
+      height: calc(100vh - 52px - 56px);
+      height: calc(100dvh - 52px - 56px);
+      padding: 14px 14px 20px;
       -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
     }
     .editor.mobile-active { display: block; }
 
     /* Preview */
     .preview-panel {
       display: none;
+      flex-direction: column;
       width: 100%;
       border-left: none;
       border-top: 1px solid var(--border);
+      height: calc(100vh - 52px - 56px);
       height: calc(100dvh - 52px - 56px);
       flex-shrink: 0;
       overflow: hidden;
@@ -759,16 +765,32 @@
     .preview-panel.mobile-active { display: flex; }
 
     .preview-scroll {
+      flex: 1;
       padding: 12px;
-      background: #bbb;
+      background: #ccc;
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
-    /* Resume scale */
-    .resume-page-wrapper { width: calc(100vw - 48px); max-width: 340px; }
-    .resume-page { transform-origin: top left; }
+    /* Resume wrapper — height set by JS */
+    .resume-page-wrapper {
+      width: calc(100vw - 32px);
+      max-width: 360px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Resume page — scaled to fit, origin top-left */
+    .resume-page {
+      transform-origin: top left;
+      transform: scale(0.35);
+      position: absolute;
+      top: 0; left: 0;
+    }
 
     /* Bottom tabs */
     .mobile-tabs { display: block; }
@@ -1288,15 +1310,17 @@ window.addEventListener('DOMContentLoaded', function() {
 // Dynamically scale resume-page on mobile to always fill the scroll area
 function scaleMobilePreview() {
   if (window.innerWidth > 640) return;
-  var scroll = document.querySelector('.preview-scroll');
   var wrapper = document.querySelector('.resume-page-wrapper');
   var page = document.querySelector('.resume-page');
-  if (!scroll || !wrapper || !page) return;
-  var availW = scroll.clientWidth - 24;
+  if (!wrapper || !page) return;
+  // Always use window.innerWidth - padding for reliable width
+  var availW = window.innerWidth - 32;
   var scale = availW / 794;
   wrapper.style.width = availW + 'px';
   page.style.transform = 'scale(' + scale + ')';
-  updateWrapperHeight();
+  // Set wrapper height = page natural height * scale
+  var pageH = page.scrollHeight || 1123;
+  wrapper.style.height = Math.ceil(pageH * scale) + 'px';
 }
 window.addEventListener('resize', function() { scaleMobilePreview(); updateWrapperHeight(); });
 
@@ -1334,6 +1358,12 @@ function showMobilePanel(panel) {
   } else {
     preview.classList.add('mobile-active'); editor.classList.remove('mobile-active');
     tabPrev.classList.add('active'); tabEdit.classList.remove('active');
+    // Recalculate after panel is visible in DOM
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        scaleMobilePreview();
+      });
+    });
   }
 }
 
@@ -1651,21 +1681,21 @@ function updateWrapperHeight() {
   var page = document.querySelector('.resume-page');
   var wrapper = document.querySelector('.resume-page-wrapper');
   if (!page || !wrapper) return;
-  // Get current scale from transform
-  var style = window.getComputedStyle(page);
-  var matrix = style.transform;
-  var scale = 0.539; // default
-  if (matrix && matrix !== 'none') {
-    var match = matrix.match(/matrix\(([^,]+)/);
-    if (match) scale = parseFloat(match[1]);
-  }
-  // Override with inline style if set
+  // On mobile use scaleMobilePreview which handles everything
+  if (window.innerWidth <= 640) { scaleMobilePreview(); return; }
+  // Desktop: read scale from inline style or computed
+  var scale = 0.539;
   if (page.style.transform) {
-    var m2 = page.style.transform.match(/scale\(([^)]+)\)/);
-    if (m2) scale = parseFloat(m2[1]);
+    var m = page.style.transform.match(/scale\(([^)]+)\)/);
+    if (m) scale = parseFloat(m[1]);
+  } else {
+    var matrix = window.getComputedStyle(page).transform;
+    if (matrix && matrix !== 'none') {
+      var m2 = matrix.match(/matrix\(([^,]+)/);
+      if (m2) scale = parseFloat(m2[1]);
+    }
   }
-  var actualH = page.scrollHeight;
-  wrapper.style.height = Math.ceil(actualH * scale) + 'px';
+  wrapper.style.height = Math.ceil(page.scrollHeight * scale) + 'px';
 }
 
 // ── STRENGTH ──
