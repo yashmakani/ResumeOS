@@ -274,7 +274,7 @@ nav.scrolled {
   border-top: 1px solid rgba(255,255,255,0.07);
   animation: fadeUp 0.6s ease 0.5s both;
 }
-
+.stat-item {}
 .stat-num {
   font-family: 'Playfair Display', serif;
   font-size: 28px;
@@ -546,6 +546,7 @@ footer {
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 48px;
 }
+.footer-brand {}
 .footer-logo {
   font-family: 'Playfair Display', serif;
   font-size: 24px;
@@ -933,7 +934,7 @@ footer {
 // ── BUILDER URL ──
 function builderURL() {
   var base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-  return base + 'resume-builder.html';
+  return base + 'about.html';
 }
 
 // ── OPEN BUILDER in new tab ──
