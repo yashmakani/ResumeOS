@@ -41,5 +41,4 @@ No frameworks, no backend, no installation required — just open and start buil
 
 ## 👨‍💻 Developed by
 
-[Yash Makani]
-```
+Yash Makani
