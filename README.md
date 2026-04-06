@@ -41,5 +41,5 @@ No frameworks, no backend, no installation required — just open and start buil
 
 ## 👨‍💻 Developed by
 
-[Yash Makani](https://yashmakani.netlify.app)
+[Yash Makani]
 ```
